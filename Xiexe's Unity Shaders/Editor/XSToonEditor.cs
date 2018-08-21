@@ -22,7 +22,7 @@ public class XSToonEditor : ShaderGUI
     //public static GUIContent nameText = new GUIContent("name", "desc");
     private static class Styles
     {
-        public static GUIContent version = new GUIContent("XSToon v1.3.2 DEV", "The currently installed version of XSToon.");
+        public static GUIContent version = new GUIContent("XSToon v1.3.2", "The currently installed version of XSToon.");
         public static GUIContent mainText = new GUIContent("Main Options", "The main options for the Shader");
         public static GUIContent rampText = new GUIContent("Shadow Ramp", "Shadow ramp texture, horizontal or vertical, Black to White gradient that controls how shadows look - examples are included in the Shadow Ramps folder");
         public static GUIContent specMapText = new GUIContent("Specular Map", "Specular Map, This controls where the specular pattern can show. Should be a black and white image");
