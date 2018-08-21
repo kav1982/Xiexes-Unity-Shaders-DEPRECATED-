@@ -301,7 +301,7 @@ public class XSToonEditor : ShaderGUI
                     if(reflType.floatValue == 3)
                     {
                         material.EnableKeyword("_MATCAP_CUBEMAP_ON");
-                        material.DisableKeyword("_MATCAP_ON");
+                        material.EnableKeyword("_MATCAP_ON");
                         material.DisableKeyword("_STYLIZEDREFLECTION_ON");
                         material.DisableKeyword("_PBRREFL_ON");
                         materialEditor.ShaderProperty(matcapStyle, "Blend Mode");

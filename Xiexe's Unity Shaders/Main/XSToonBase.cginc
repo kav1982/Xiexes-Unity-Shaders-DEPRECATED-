@@ -86,6 +86,15 @@
 			return ShadeSH9(half4(normal, 1.0));
 		}
 
+		float4x4 tMatrixFunc(float3 x, float3 y, float3 z)
+		{
+			float4x4 tMatrix = {x.x,y.x,z.x,0,
+								x.y,y.y,z.y,0,
+								x.z,y.z,z.z,0,
+								0  ,0  ,0  ,0};
+			return tMatrix;					
+		}
+
 		float3 StereoWorldViewDir( float3 worldPos )
 		{
 			#if UNITY_SINGLE_PASS_STEREO
@@ -129,7 +138,7 @@
 			float3 ase_vertexNormal = mul( unity_WorldToObject, float4( ase_worldNormal, 0 ) );
 			float4 worldNormals = mul(unity_ObjectToWorld,float4( ase_vertexNormal , 0.0 ));
 			float4 lerpedNormals = lerp( float4( WorldNormalVector( i , normalMap ) , 0.0 ) , worldNormals , 0.3);
-			float4 vertexNormals = lerpedNormals;
+			float4 WSvertexNormals = lerpedNormals;
 
 
 			float3 shadeSH9 = ShadeSH9(float4(0,0,0,1));
@@ -155,8 +164,8 @@
 			//After some searching I discovered that NdotL is actually a way to hide the horrible artifacting you get from 
 			//selfshadowing, which is provided by light Attenuation. So I do both a Smooth and Sharp calc for NdotL, and then
 			//choose one based on the Shadow Type you choose. 
-			float NdotL = dot( vertexNormals , float4( light_Dir.xyz , 0.0 ) );
-			float roundedNdotL = ceil(dot( vertexNormals , float4( light_Dir.xyz , 0.0 ) )); 
+			float NdotL = dot( WSvertexNormals , float4( light_Dir.xyz , 0.0 ) );
+			float roundedNdotL = ceil(dot( WSvertexNormals , float4( light_Dir.xyz , 0.0 ) )); 
 			float finalNdotL = lerp(roundedNdotL, NdotL, _ShadowType);
 			
 			//We don't need to use the rounded NdotL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
@@ -169,7 +178,7 @@
 			float4 vertexWorldPos = mul(unity_ObjectToWorld,ase_vertex4Pos);
 			float4 objPos = mul(unity_ObjectToWorld, float4(0,0,0,1));
 			float3 stereoWorldViewDir = StereoWorldViewDir(vertexWorldPos);
-			float VdotN = dot(vertexNormals, float4(stereoWorldViewDir, 0.0));
+			float VdotN = dot(WSvertexNormals, float4(stereoWorldViewDir, 0.0));
 
 		//rimlight typing
 			float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(VdotN)), (1.0 - _RimWidth))) * _RimIntensity);
@@ -187,9 +196,9 @@
 			float4 roughMap = float4(0,0,0,0);
 
 		//reflectedDir = reflections bouncing off the surface into the eye
-			float3 reflectedDir = reflect(-viewDir, vertexNormals);
+			float3 reflectedDir = reflect(-viewDir, WSvertexNormals);
 		//reflectionDir = reflections bouncing off of the eye as if it were the light source
-			float3 reflectionDir = reflect(-light_Dir, vertexNormals);
+			float3 reflectionDir = reflect(-light_Dir, WSvertexNormals);
 
 		//PBR
 			#ifdef _PBRREFL_ON
@@ -209,9 +218,9 @@
 					//Anistropic Stripe
 						float3 tangent = i.tangentDir;
 						half3 h = normalize(light_Dir + viewDir);
-						float ndh = max(0, dot (vertexNormals, h));
-						half3 binorm = cross(vertexNormals, tangent);
-						fixed ndv = dot(viewDir, vertexNormals);
+						float ndh = max(0, dot (WSvertexNormals, h));
+						half3 binorm = cross(WSvertexNormals, tangent);
+						fixed ndv = dot(viewDir, WSvertexNormals);
 						float aX = dot(h, tangent) / 0.75;
 						float aY = dot(h, binorm) / _Metallic;
 						reflection = sqrt(max(0.0, NdotL / ndv)) * exp(-2.0 * (aX * aX + aY * aY) / (1.0 + ndh)) * (_ReflSmoothness) * 2.0;
@@ -225,12 +234,22 @@
 				#endif
 		//Matcap	
 				#ifdef _MATCAP_ON
-					roughMap = tex2D(_RoughMap, uv_MainTex);
+						roughMap = tex2D(_RoughMap, uv_MainTex);
 					#ifdef _MATCAP_CUBEMAP_ON
 						reflection = texCUBElod(_BakedCube, float4(reflectedDir, _ReflSmoothness * 6));
 					#else
-						float2 remapUV = (mul(UNITY_MATRIX_V, float4(vertexNormals.xyz, 0)).xy * 0.5 + 0.5);
-						reflection = tex2Dlod(_MetallicMap, float4(remapUV,0, (_ReflSmoothness * 6)));
+						float3 sampleY = float3(0,1,0);
+
+						float3 VcrossY = cross(viewDir, sampleY);
+						float3 VCYcrossV = cross(VcrossY, viewDir);
+
+						float4x4 tmat = tMatrixFunc(viewDir, VcrossY, VCYcrossV);
+
+						float4 remapUV = mul(WSvertexNormals, tmat);
+						remapUV = remapUV * 0.5 + 0.5;
+
+						//float2 remapUV = (mul(UNITY_MATRIX_V, float4(WSvertexNormals.xyz, 0)).xy * 0.5 + 0.5);
+						reflection = tex2Dlod(_MetallicMap, float4(remapUV.yz, 0, (_ReflSmoothness * 6)));
 					#endif
 				#endif
 			#endif
@@ -264,7 +283,7 @@
 		
 		//grab the specular map texture sample, get the dot product of the vertex normals vs the stereo correct view direction, and create specular reflections and a rimlight based on that and a texture we feed in.
 			float4 specularMap = tex2D( _SpecularMap, UVSet );
-			float NdotV = dot(reflect(light_Dir , vertexNormals), float4((stereoWorldViewDir * -1.0), 0.0));
+			float NdotV = dot(reflect(light_Dir , WSvertexNormals), float4((stereoWorldViewDir * -1.0), 0.0));
 		//clean this
 			float specularRefl = (((specularMap.g * (1.0 - specularMap.r)) * tex2D(_SpecularPattern, (((UVSet - float2( 0.5,0.5)) * _SpecularPatternTiling) + float2(0.5,0.5))).r) * (_SpecularIntensity * 2) * saturate(pow(saturate(NdotV) , _SpecularArea)));
 		
