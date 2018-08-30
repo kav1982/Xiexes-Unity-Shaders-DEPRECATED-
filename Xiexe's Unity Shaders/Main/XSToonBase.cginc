@@ -78,7 +78,7 @@
 		 float _Saturation;
 		 float _MatcapStyle;
 		 float3 _ShadowTint;
-		 float _IndirectType;
+		 float _RampColor;
 
 
 		float3 ShadeSH9( float3 normal )
@@ -204,7 +204,7 @@
 			#ifdef _PBRREFL_ON
 				metalMap = (tex2D(_MetallicMap, uv_MainTex) * _Metallic);
 				roughMap = tex2D(_RoughMap, uv_MainTex);
-				float roughness = saturate((_ReflSmoothness * roughMap.r));
+				float roughness = saturate((_ReflSmoothness * (roughMap.r)));
 				reflection = (UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectedDir, roughness * 6));
 					
 				if (any(reflection.xyz) == 0)
@@ -256,26 +256,31 @@
 
 		//Recieved Shadows and lighting
 			float4 shadowRamp = tex2D( _ShadowRamp, float2(remappedRamp,remappedRamp));	
+			
 			//we initialize finalshadow here, but we will be editing this based on the lighting env below
-			float finalShadow = saturate(((ase_lightAtten * .5) - (1-shadowRamp.r)));
-			float realtimeShadows = saturate(1-finalShadow);
+			float3 finalShadow = saturate(((ase_lightAtten * .5) - (1-shadowRamp.r)));
+			//float realtimeShadows = saturate(1-finalShadow);
 
 		//We default to baked lighting situations, so we use these values
-			//FakeAmbient or RealAmbient
-			float3 fakeindirectLight = length(shadeSH9) * _ShadowTint;
-			float3 realindirectLight = shadeSH9;
-
-			float3 indirectLight = lerp(realindirectLight, fakeindirectLight, _IndirectType);
-			
-			
+			float3 indirectLight = shadeSH9;
 			float3 finalLight = indirectLight * (shadowRamp + ((1-_ShadowIntensity) * (1-shadowRamp)));
 
 		//If our lighting environment matches the number for realtime lighting, use these numbers instead
 			if (light_Env == 1) 
 			{
-				finalShadow = saturate(((finalNdotL * ase_lightAtten * .5) - (1-shadowRamp.r)));
-				lightColor = lightColor * (finalShadow);
-				finalLight = lightColor + (indirectLight);
+				#if _WORLDSHADOWCOLOR_ON
+					finalShadow = saturate(((finalNdotL * ase_lightAtten * .5) - (1-shadowRamp.r)));
+					lightColor = lightColor * (finalShadow);
+					finalLight = lightColor + (indirectLight);
+				#else 
+					float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
+					float3 lightAtten = ase_lightAtten + rampBaseColor;
+					NdotL *= 0.5 + 0.5;
+					shadowRamp = tex2D(_ShadowRamp, float2(NdotL,NdotL));
+					finalShadow = min(lightAtten, shadowRamp.xyz);
+					lightColor = lightColor * (finalShadow);
+					finalLight = indirectLight + lightColor;
+				#endif
 			}
 		//get the main texture and multiply it by the color tint, and do saturation on the main texture
 			float4 MainTex = pow(tex2D( _MainTex, uv_MainTex ), _Saturation);
@@ -297,7 +302,8 @@
 			//Do PBR
 				#ifdef _PBRREFL_ON
 					float3 finalreflections = (reflection * (MainColor * 2));
-					finalColor = (MainColor * ((1-_Metallic) * (1-metalMap.r))) + finalreflections;
+					finalColor = (MainColor * ((1-_Metallic * metalMap.r)));
+					finalColor += finalreflections;
 				#endif
 			//Do Stylized
 				#ifdef _STYLIZEDREFLECTION_ON
@@ -305,7 +311,7 @@
 				#endif
 			//Do Matcap
 				#ifdef _MATCAP_ON
-					metalMap = (tex2D(_MetallicMap, uv_MainTex) * _Metallic);
+					//metalMap = (tex2D(_MetallicMap, uv_MainTex) * _Metallic);
 				//Additive
 					if(_MatcapStyle == 0)
 					{

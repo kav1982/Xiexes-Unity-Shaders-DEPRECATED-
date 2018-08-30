@@ -22,7 +22,7 @@ public class XSToonEditor : ShaderGUI
     //public static GUIContent nameText = new GUIContent("name", "desc");
     private static class Styles
     {
-        public static GUIContent version = new GUIContent("XSToon v1.3.2", "The currently installed version of XSToon.");
+        public static GUIContent version = new GUIContent("XSToon v1.4 BETA", "The currently installed version of XSToon.");
         public static GUIContent mainText = new GUIContent("Main Options", "The main options for the Shader");
         public static GUIContent rampText = new GUIContent("Shadow Ramp", "Shadow ramp texture, horizontal or vertical, Black to White gradient that controls how shadows look - examples are included in the Shadow Ramps folder");
         public static GUIContent specMapText = new GUIContent("Specular Map", "Specular Map, This controls where the specular pattern can show. Should be a black and white image");
@@ -113,7 +113,7 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty normalTiling;
     MaterialProperty stylizedType;
     MaterialProperty shadowTint;
-    MaterialProperty IndirectType;
+    MaterialProperty rampColor;
     public Texture m_EmptyTexture;
 
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
@@ -161,7 +161,7 @@ public class XSToonEditor : ShaderGUI
             matcapStyle = ShaderGUI.FindProperty("_MatcapStyle", props);
             stylizedType = ShaderGUI.FindProperty("_StylizedReflStyle", props);
             shadowTint = ShaderGUI.FindProperty("_ShadowTint", props);
-            IndirectType = ShaderGUI.FindProperty("_IndirectType", props);
+            rampColor = ShaderGUI.FindProperty("_RampColor", props);
 
             //advanced options
             colorMask = ShaderGUI.FindProperty("_colormask", props);
@@ -211,10 +211,6 @@ public class XSToonEditor : ShaderGUI
                     materialEditor.ShaderProperty(rimIntensity, Styles.rimIntText, 2);
                 }
 
-                materialEditor.ShaderProperty(IndirectType, "Indirect Style");
-                if(IndirectType.floatValue == 1){
-                    materialEditor.ShaderProperty(shadowTint, "Indirect Color");                    
-                }
 
                 if (rimStyle.floatValue == 1)
                 {
@@ -234,12 +230,26 @@ public class XSToonEditor : ShaderGUI
                 GUILayout.Label(Styles.mainText, EditorStyles.boldLabel);
                 materialEditor.TexturePropertySingleLine(Styles.MainTexText, mainTex, tint);
                 materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
+
+                EditorGUILayout.Space();
+
                 materialEditor.TexturePropertySingleLine(Styles.normalText, normal);
                 materialEditor.ShaderProperty(normalTiling, Styles.normalTiling, 3);
                 materialEditor.TexturePropertySingleLine(Styles.rampText, shadowRamp);
+                materialEditor.ShaderProperty(rampColor, "Use Ramp Color", 2);
+                if(rampColor.floatValue == 0){
+                     material.EnableKeyword("_WORLDSHADOWCOLOR_ON");                   
 
+                }
+                if(rampColor.floatValue == 1){
+                    material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
+                }
+
+                EditorGUILayout.Space();
                 //specular
                 materialEditor.TexturePropertySingleLine(Styles.specMapText, specMap);
+                
+                EditorGUILayout.Space();
                 materialEditor.TexturePropertySingleLine(Styles.specPatternText, specPattern);
                 materialEditor.ShaderProperty(specArea, Styles.SmoothnessText, 3);
                 materialEditor.ShaderProperty(specIntensity, Styles.sintensityText, 3);
