@@ -263,7 +263,7 @@
 
 		//We default to baked lighting situations, so we use these values
 			float3 indirectLight = shadeSH9;
-			float3 finalLight = indirectLight * (shadowRamp + ((1-_ShadowIntensity) * (1-shadowRamp)));
+			float3 finalLight = indirectLight * shadowRamp; //+ ((1-_ShadowIntensity) * (1-shadowRamp)));
 
 		//If our lighting environment matches the number for realtime lighting, use these numbers instead
 			if (light_Env == 1) 
@@ -272,14 +272,20 @@
 					finalShadow = saturate(((finalNdotL * ase_lightAtten * .5) - (1-shadowRamp.r)));
 					lightColor = lightColor * (finalShadow);
 					finalLight = lightColor + (indirectLight);
-				#else 
-					float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
-					float3 lightAtten = ase_lightAtten + rampBaseColor;
-					NdotL *= 0.5 + 0.5;
-					shadowRamp = tex2D(_ShadowRamp, float2(NdotL,NdotL));
-					finalShadow = min(lightAtten, shadowRamp.xyz);
-					lightColor = lightColor * (finalShadow);
-					finalLight = indirectLight + lightColor;
+				#else
+					#if DIRECTIONAL
+						float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
+						float3 lightAtten = ase_lightAtten + rampBaseColor;
+						NdotL *= 0.5 + 0.5;
+						shadowRamp = tex2D(_ShadowRamp, float2(NdotL,NdotL));
+						finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
+						lightColor = lightColor;
+						finalLight = (indirectLight + lightColor) * finalShadow;
+					#else
+						finalShadow = saturate(((finalNdotL * ase_lightAtten * .5) - (1-shadowRamp.r)));
+						lightColor = lightColor * (finalShadow);
+						finalLight = lightColor + (indirectLight);
+					#endif
 				#endif
 			}
 		//get the main texture and multiply it by the color tint, and do saturation on the main texture

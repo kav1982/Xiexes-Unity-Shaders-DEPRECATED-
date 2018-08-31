@@ -345,7 +345,7 @@ public class XSToonEditor : ShaderGUI
                 EditorGUILayout.Space();
                 GUILayout.Label("Baked Lighting Settings", EditorStyles.boldLabel);
                 materialEditor.ShaderProperty(simLightDir, Styles.simLightText);
-                materialEditor.ShaderProperty(shadowIntensity, "Shadow Intensity");
+               // materialEditor.ShaderProperty(shadowIntensity, "Shadow Intensity");
 
                 EditorGUILayout.Space();
 
