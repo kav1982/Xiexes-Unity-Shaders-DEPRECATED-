@@ -97,14 +97,13 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty stencilZFail;
     MaterialProperty ztest;
     MaterialProperty zwrite;
-    MaterialProperty shadowIntensity;
     MaterialProperty reflSmooth;
     MaterialProperty metal;
     MaterialProperty metalMap;
     MaterialProperty roughMap;
     MaterialProperty bakedCube;
-    MaterialProperty useRefl;//_UseReflections
-    MaterialProperty bakedReflOnly;//_UseOnlyBakedCube
+    MaterialProperty useRefl;
+    MaterialProperty bakedReflOnly;
     MaterialProperty shadowType;
     MaterialProperty reflType;
     MaterialProperty saturation;
@@ -112,7 +111,6 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty matcapStyle;
     MaterialProperty normalTiling;
     MaterialProperty stylizedType;
-    MaterialProperty shadowTint;
     MaterialProperty rampColor;
     public Texture m_EmptyTexture;
 
@@ -145,7 +143,6 @@ public class XSToonEditor : ShaderGUI
             uv2 = ShaderGUI.FindProperty("_UseUV2forNormalsSpecular", props);
             blendMode = ShaderGUI.FindProperty("_mode", props);
             advMode = ShaderGUI.FindProperty("_advMode", props);
-            shadowIntensity = ShaderGUI.FindProperty("_ShadowIntensity", props);
             reflSmooth = ShaderGUI.FindProperty("_ReflSmoothness", props);
             metal = ShaderGUI.FindProperty("_Metallic", props);
             metalMap = ShaderGUI.FindProperty("_MetallicMap", props);
@@ -160,7 +157,6 @@ public class XSToonEditor : ShaderGUI
             useRefl = ShaderGUI.FindProperty("_UseReflections", props);
             matcapStyle = ShaderGUI.FindProperty("_MatcapStyle", props);
             stylizedType = ShaderGUI.FindProperty("_StylizedReflStyle", props);
-            shadowTint = ShaderGUI.FindProperty("_ShadowTint", props);
             rampColor = ShaderGUI.FindProperty("_RampColor", props);
 
             //advanced options
@@ -345,7 +341,6 @@ public class XSToonEditor : ShaderGUI
                 EditorGUILayout.Space();
                 GUILayout.Label("Baked Lighting Settings", EditorStyles.boldLabel);
                 materialEditor.ShaderProperty(simLightDir, Styles.simLightText);
-               // materialEditor.ShaderProperty(shadowIntensity, "Shadow Intensity");
 
                 EditorGUILayout.Space();
 

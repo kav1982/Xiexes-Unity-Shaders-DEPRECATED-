@@ -78,7 +78,7 @@ Material:
     - _ReflSmoothness: 0.208
     - _ReflType: 1
     - _RenderType: 0
-    - _RimIntensity: 0.8
+    - _RimIntensity: 5.78
     - _RimWidth: 0.2
     - _RimlightType: 0
     - _Saturation: 1

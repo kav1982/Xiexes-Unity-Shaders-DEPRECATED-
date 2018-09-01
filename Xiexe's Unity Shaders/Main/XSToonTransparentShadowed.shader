@@ -26,7 +26,6 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 		_BakedCube("Local Cubemap", Cube) = "black" {}
 		_SpecularPatternTiling("Specular Pattern Tiling", Vector) = (20,20,0,0)
 		_Color("Color Tint", Color) = (1,1,1,1)
-		_ShadowTint("Shadow Tint", Color) = (0.5, 0.5, 0.5, 1)
 		_MainTex("Main Tex", 2D) = "white" {}
 		[Normal]_Normal("Normal", 2D) = "bump" {}
 		_NormalTiling("NormalTiling", Vector) = (1,1,0,0)
@@ -39,7 +38,6 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 		_EmissiveTex("Emissive Tex", 2D) = "white" {}
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0) 
 		_Cutoff ("Cutout Amount", Float) = 0.5
-		_ShadowIntensity ("ShadowIntensity", Range(0,1)) = 0.3
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,2)) = 1
