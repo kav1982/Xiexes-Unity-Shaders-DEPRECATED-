@@ -275,7 +275,7 @@
 						shadowRamp = tex2D(_ShadowRamp, float2(remappedRamp,remappedRamp));
 						finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
 						lightColor = lightColor;
-						finalLight = (indirectLight + lightColor) * finalShadow;
+						finalLight = (saturate(indirectLight * 0.25) + lightColor) * finalShadow;
 					#else
 						finalShadow = saturate(((finalNdotL * ase_lightAtten * .5) - (1-shadowRamp.r)));
 						lightColor = lightColor * (finalShadow);
