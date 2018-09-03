@@ -179,7 +179,7 @@ public class XSShaderGenerator : EditorWindow
 			existsBox = 1;
 		}
 
-		string joined = string.Join(" - ", existingShaders);
+		string joined = "\n\n - " + string.Join(", ", existingShaders);
 		
 		if(existsBox == 0){
 			Create(finalFilePath);

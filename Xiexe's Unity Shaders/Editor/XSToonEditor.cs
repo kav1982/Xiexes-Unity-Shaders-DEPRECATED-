@@ -176,8 +176,6 @@ public class XSToonEditor : ShaderGUI
             // Swap between blend modes 
             EditorGUI.BeginChangeCheck();
             {
-                EditorGUI.showMixedValue = blendMode.hasMixedValue;
-                var bMode = (BlendMode)blendMode.floatValue;
 
                 EditorGUI.BeginChangeCheck();
 
@@ -218,18 +216,20 @@ public class XSToonEditor : ShaderGUI
                 {
                     material.SetFloat("_RimIntensity", 0);
                 }
-
-                EditorGUILayout.Space();
+                XSStyles.Separator();        
                 
                 //main
                 GUILayout.Label(Styles.mainText, EditorStyles.boldLabel);
                 materialEditor.TexturePropertySingleLine(Styles.MainTexText, mainTex, tint);
                 materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
 
-                EditorGUILayout.Space();
-
+                //normal map
+                XSStyles.Separator();  
                 materialEditor.TexturePropertySingleLine(Styles.normalText, normal);
                 materialEditor.ShaderProperty(normalTiling, Styles.normalTiling, 3);
+
+                //shadow ramp
+                XSStyles.Separator();  
                 materialEditor.TexturePropertySingleLine(Styles.rampText, shadowRamp);
                 materialEditor.ShaderProperty(rampColor, "Use Ramp Color", 2);
                 if(rampColor.floatValue == 0){
@@ -239,18 +239,17 @@ public class XSToonEditor : ShaderGUI
                 if(rampColor.floatValue == 1){
                     material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
                 }
-
-                EditorGUILayout.Space();
-                //specular
-                materialEditor.TexturePropertySingleLine(Styles.specMapText, specMap);
                 
-                EditorGUILayout.Space();
+                //specular
+                XSStyles.Separator();  
+                materialEditor.TexturePropertySingleLine(Styles.specMapText, specMap);
                 materialEditor.TexturePropertySingleLine(Styles.specPatternText, specPattern);
                 materialEditor.ShaderProperty(specArea, Styles.SmoothnessText, 3);
                 materialEditor.ShaderProperty(specIntensity, Styles.sintensityText, 3);
                 materialEditor.ShaderProperty(specTiling, Styles.stilingText, 3);
 
                 //metallic
+                XSStyles.Separator();  
                 materialEditor.ShaderProperty(useRefl, "Use Reflections");
                 if (useRefl.floatValue == 0)
                 {
@@ -325,7 +324,8 @@ public class XSToonEditor : ShaderGUI
                     material.DisableKeyword("_MATCAP_CUBEMAP_ON");
                 }
 
-
+                //emission
+                XSStyles.Separator();  
                 materialEditor.ShaderProperty(emissiveToggle, "Emission");
                 if (emissiveToggle.floatValue == 1)
                 {
@@ -335,16 +335,18 @@ public class XSToonEditor : ShaderGUI
                 {
                     material.SetColor("_EmissiveColor", Color.black);
                 }
+
+                //cutoff
                 materialEditor.ShaderProperty(alphaCutoff, Styles.cutoutText);
 
-                EditorGUILayout.Space();
+                //Baked Lighting Settings
+                XSStyles.Separator();
                 GUILayout.Label("Baked Lighting Settings", EditorStyles.boldLabel);
                 materialEditor.ShaderProperty(simLightDir, Styles.simLightText);
 
-                EditorGUILayout.Space();
-
                 if (advMode.floatValue == 1)
                 {
+                    XSStyles.Separator();
                     GUILayout.Label(Styles.advancedOptions, EditorStyles.boldLabel);
                     //Stencil
                     GUILayout.Label("Stencil Buffer", EditorStyles.boldLabel);
