@@ -100,10 +100,8 @@ public class XSShaderGenerator : EditorWindow
 		EditorGUI.BeginChangeCheck();
 		XSStyles.DoHeader(XSStyles.Styles.version);
 		XSStyles.doLabel("This generator will generate the chosen variants of the shader - this process could take awhile, and may seem to freeze Unity. It's not frozen, it's actually compiling the shaders. Sorry for the compile times!");
-		
-		EditorGUILayout.Space();
-		EditorGUILayout.Space();
 
+		XSStyles.Separator();
 		XSStyles.doLabel("Generate Variants");
 			cutout = GUILayout.Toggle(cutout, "Cutout");
 			transparent = GUILayout.Toggle(transparent, "Transparent");
