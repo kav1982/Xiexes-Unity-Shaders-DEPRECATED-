@@ -1,6 +1,4 @@
-//The base of this shader was made in amplify - however it has been heavily altered. If you open this in amplify it will kill the shader, don't do it.
-
-Shader "Xiexe/Toon/XSToonTransparentShadowed"
+Shader !name
 {
 	Properties
 	{
@@ -17,7 +15,7 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 		[Enum(Add,0,Multiply,1,Subtract,2)] _MatcapStyle ("Matcap Blend Mode", Int) = 1
 		[Enum(Dot,0,Anistropic,1)] _StylizedReflStyle ("StylizedReflStyle", Int) = 0
 		[Enum(Use World Color, 0, Use Ramp Color, 1)] _RampColor ("Ramp Color", Int) = 1
-		
+
 		[NoScaleOffset]_ShadowRamp("Shadow Ramp", 2D) = "white" {}
 		[NoScaleOffset]_SpecularMap("Specular Map", 2D) = "black" {}
 		[NoScaleOffset]_SpecularPattern("Specular Pattern", 2D) = "black" {}
@@ -38,11 +36,14 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 		_EmissiveTex("Emissive Tex", 2D) = "white" {}
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0) 
 		_Cutoff ("Cutout Amount", Float) = 0.5
+		_DitherScale("Dither Scale", Float) = 10
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,2)) = 1
 		_Saturation("Saturation", Range(0.1,6)) = 1
-
+		
+		
+        [NoScaleOffset]_DitherTex ("Dither Texture", 2D) = "white" {}
 	//Don't delete these or comment them out, they are needed. Not sure why as of now.
 		[HideInInspector] _texcoord2( "", 2D ) = "white" {}
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
@@ -73,15 +74,14 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 
 	SubShader
 	{
-		Tags{ "RenderType" = "Transparent"  "Queue" = "AlphaTest+50" "IsEmissive" = "true"  }
-
+		!shadertags 
 
 		Cull [_Culling]
-		Blend One OneMinusSrcAlpha
+		Blend [_srcblend] [_dstblend]
 		ColorMask [_colormask]
 		ZTest [_ZTest]
 		ZWrite [_ZWrite]
-
+		
 		Stencil
 		{
 			Ref [_Stencil]
@@ -94,7 +94,7 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 		}
 
 		CGINCLUDE
-		#define alphablend
+		!definerendermode
 		#include "XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
@@ -109,9 +109,9 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 		//we also need to put the cutout stuff here, otherwise emission breaks with cutout, unfortunetly it costs an extra texture sample if you're using cutout
 			
 			#ifdef _CUTOUT_ON
-			float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
-			float4 MainTex194 = ( tex2D( _MainTex, uv_MainTex ));
-			clip(MainTex194.a - _Cutoff);
+				float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
+				float4 MainTex194 = ( tex2D( _MainTex, uv_MainTex ));
+				clip(MainTex194.a - _Cutoff);
 			#endif
 
 		//do all the emission
@@ -132,6 +132,6 @@ Shader "Xiexe/Toon/XSToonTransparentShadowed"
 		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON
 		ENDCG
 	}
-	Fallback "Transparent/Diffuse"
+    !fallback
 	CustomEditor "XSToonEditor"
 }

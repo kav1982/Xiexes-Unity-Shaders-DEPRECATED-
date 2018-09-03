@@ -215,6 +215,7 @@
 				#ifdef _STYLIZEDREFLECTION_ON
 					#ifdef _ANISTROPIC_ON
 					//Anistropic Stripe
+						metalMap = (tex2D(_MetallicMap, uv_MainTex) * _Metallic);
 						float3 tangent = i.tangentDir;
 						half3 h = normalize(light_Dir + viewDir);
 						float ndh = max(0, dot (WSvertexNormals, h));
@@ -223,7 +224,7 @@
 						float aX = dot(h, tangent) / 0.75;
 						float aY = dot(h, binorm) / _Metallic;
 						reflection = sqrt(max(0.0, NdotL / ndv)) * exp(-2.0 * (aX * aX + aY * aY) / (1.0 + ndh)) * (_ReflSmoothness) * 2.0;
-						reflection = ceil(smoothstep(0.5-_ReflSmoothness*0.5, 0.5+_ReflSmoothness*0.5, reflection));
+						reflection = ceil(smoothstep(0.5-_ReflSmoothness*0.5, 0.5+_ReflSmoothness*0.5, reflection)) * metalMap;
 					#else
 					//Dot Stylized	
 						metalMap = (tex2D(_MetallicMap, uv_MainTex) * _Metallic);
