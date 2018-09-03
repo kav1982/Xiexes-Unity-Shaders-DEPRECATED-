@@ -7,10 +7,10 @@ using System.IO;
 public class XSGradientEditor : EditorWindow {
 
 	public Gradient gradient;
-	[MenuItem ("Xiexe/Tools/Gradient Generator")]
+	[MenuItem ("Xiexe/Tools/Gradient Editor")]
 	// Use this for initialization
 	static void Init(){
-		XSGradientEditor window = EditorWindow.GetWindow<XSGradientEditor>(true, "XSToon: Gradient Generator", true);
+		XSGradientEditor window = EditorWindow.GetWindow<XSGradientEditor>(true, "XSToon: Gradient Editor", true);
 		window.minSize = new Vector2(300,60);
 		window.maxSize = new Vector2(300,60);
 	}
