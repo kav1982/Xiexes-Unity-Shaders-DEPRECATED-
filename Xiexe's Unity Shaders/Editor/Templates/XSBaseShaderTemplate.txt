@@ -77,7 +77,7 @@ Shader !name
 		!shadertags 
 
 		Cull [_Culling]
-		Blend [_srcblend] [_dstblend]
+		//!blend
 		ColorMask [_colormask]
 		ZTest [_ZTest]
 		ZWrite [_ZWrite]
@@ -122,7 +122,9 @@ Shader !name
 
 		ENDCG
 		CGPROGRAM
-		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
+		
+		//!pragma
+
 		#pragma shader_feature _ _REFLECTIONS_ON
 		#pragma shader_feature _ _PBRREFL_ON
 		#pragma shader_feature _ _STYLIZEDREFLECTION_ON

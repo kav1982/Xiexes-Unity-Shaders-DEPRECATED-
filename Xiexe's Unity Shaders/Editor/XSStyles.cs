@@ -5,7 +5,7 @@ using System.IO;
 
 public class XSStyles : MonoBehaviour {
 	public static class Styles{
-		public static GUIContent version = new GUIContent("XSToon v1.4 BETA 5", "The currently installed version of XSToon.");
+		public static GUIContent version = new GUIContent("XSToon v1.4 BETA 6", "The currently installed version of XSToon.");
 	}
 
 
