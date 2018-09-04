@@ -1,22 +1,14 @@
 ﻿using UnityEngine; 
 using UnityEditor;
-
 using System.Collections; 
 using System.IO;
 
 public class XSGradientEditor : EditorWindow {
 
 	public Gradient gradient;
-	[MenuItem ("Xiexe/Tools/Gradient Editor")]
-	// Use this for initialization
-	static void Init(){
-		XSGradientEditor window = EditorWindow.GetWindow<XSGradientEditor>(true, "XSToon: Gradient Editor", true);
-		window.minSize = new Vector2(300,75);
-		window.maxSize = new Vector2(300,75);
-	}
-
-	// resolution presets
-
+		// resolution presets
+	public static Texture shadowRamp;
+	public string finalFilePath;
 	public enum resolutions{
 		Tiny,
 		Small,
@@ -24,14 +16,19 @@ public class XSGradientEditor : EditorWindow {
 		Large
     }
 	public resolutions res;
+	
+	[MenuItem ("Xiexe/Tools/Gradient Editor")]
+	// Use this for initialization
+	static public void Init(){
+		XSGradientEditor window = EditorWindow.GetWindow<XSGradientEditor>(true, "XSToon: Gradient Editor", true);
+		window.minSize = new Vector2(300,160);
+		window.maxSize = new Vector2(300,160);
+	}
 
-	int width = 128;
-	int height = 8;
-	// -----
-
-	void OnGUI(){
-
+	public void OnGUI(){
 		
+		
+
 		if(gradient == null)
 		{
 			gradient = new Gradient();
@@ -42,6 +39,9 @@ public class XSGradientEditor : EditorWindow {
 			EditorGUILayout.PropertyField(colorGradient, true, null);
 			serializedGradient.ApplyModifiedProperties();
 		
+		int width = 128;
+		int height = 8;
+
 		res = (resolutions)EditorGUILayout.EnumPopup("Resolution: ", res);
 			
 			switch(res){
@@ -75,26 +75,21 @@ public class XSGradientEditor : EditorWindow {
 						tex.SetPixel(x, y, gradient.Evaluate((float)x/(float)width));
 					}
 				}
+				
 
 				XSStyles.Separator();
-				if(GUILayout.Button("Save Ramp")){
-
-					string[] guids1 = AssetDatabase.FindAssets("XSShaderGenerator", null);
-					string untouchedString = AssetDatabase.GUIDToAssetPath(guids1[0]);
-					string[] splitString = untouchedString.Split('/');
-
-					ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
-					ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
-					
-					string finalFilePath = string.Join("/", splitString);
-
+				if(GUILayout.Button("Save Ramp"))
+				{
+					XSStyles.findAssetPath(finalFilePath);
 					string path = EditorUtility.SaveFilePanel("Save Ramp as PNG", finalFilePath + "/Textures/Shadow Ramps/Generated", "gradient.png", "png");
 					if(path.Length != 0)
-					{
-						GenTexture(tex, path);				
-					}
-			}
+						{
+							GenTexture(tex, path);				
+						}
+				}
 		}
+
+		XSStyles.HelpBox("You can use this to create a custom shadow ramp. \nYou must save the asset with the save button to apply changes. \n\n - Click the Gradient box. \n - Choose resolution. \n - Save.", MessageType.Info);
 	}
 
 	static void GenTexture(Texture2D tex, string path)
@@ -119,6 +114,9 @@ public class XSGradientEditor : EditorWindow {
 			texture.textureCompression = TextureImporterCompression.Uncompressed;
 			texture.SaveAndReimport();
 			AssetDatabase.Refresh();
+
+			// shadowRamp = (Texture)Resources.Load(path);
+			// Debug.LogWarning(shadowRamp.ToString());
         }
 		else
 		{

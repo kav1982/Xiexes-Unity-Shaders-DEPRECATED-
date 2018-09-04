@@ -106,13 +106,6 @@ Shader !name
 		{
 			o.SurfInput = i;
 			o.Normal = float3(0,0,1);
-		//we also need to put the cutout stuff here, otherwise emission breaks with cutout, unfortunetly it costs an extra texture sample if you're using cutout
-			
-			#ifdef _CUTOUT_ON
-				float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
-				float4 MainTex194 = ( tex2D( _MainTex, uv_MainTex ));
-				clip(MainTex194.a - _Cutoff);
-			#endif
 
 		//do all the emission
 			float2 uv_EmissiveTex = i.uv_texcoord * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;

@@ -40,36 +40,36 @@ public class XSShaderGenerator : EditorWindow
 	private static string transparentDitheredStringName = "Shader \"Xiexe/Toon/XSToonTransparentDithered\"";
 	
 	//Strings for Tags
-	private static string cutoutTags = "Tags{ \"RenderType\" = \"TransparentCutout\"  \"Queue\" = \"AlphaTest\" \"IsEmissive\" = \"true\"}";
-	private static string transparentTags = "Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"Transparent\" \"IsEmissive\" = \"true\"}";
-	private static string transparentShadowedTags = "Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"AlphaTest+50\" \"IsEmissive\" = \"true\"}";
-	private static string transparentFadeTags = "Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"Transparent\" \"IsEmissive\" = \"true\"}";
-	private static string transparentFadeShadowedTags = "Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"AlphaTest+50\" \"IsEmissive\" = \"true\"}";
-	private static string transparentDitheredTags = "Tags{ \"RenderType\" = \"TransparentCutout\"  \"Queue\" = \"AlphaTest\" \"IsEmissive\" = \"true\"}";
+	private static string cutoutTags = "	Tags{ \"RenderType\" = \"TransparentCutout\"  \"Queue\" = \"AlphaTest\" \"IsEmissive\" = \"true\"}";
+	private static string transparentTags = "	Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"Transparent\" \"IsEmissive\" = \"true\"}";
+	private static string transparentShadowedTags = "	Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"AlphaTest+50\" \"IsEmissive\" = \"true\"}";
+	private static string transparentFadeTags = "	Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"Transparent\" \"IsEmissive\" = \"true\"}";
+	private static string transparentFadeShadowedTags = "	Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"AlphaTest+50\" \"IsEmissive\" = \"true\"}";
+	private static string transparentDitheredTags = "	Tags{ \"RenderType\" = \"TransparentCutout\"  \"Queue\" = \"AlphaTest\" \"IsEmissive\" = \"true\"}";
 
 	//Strings for RenderMode
-	private static string cutoutRender = "#define cutout";
-	private static string transparentRender = "#define alphablend";
-	private static string transparentShadowedRender =  "#define alphablend";
-	private static string transparentFadeRender =  "#define alphablend";
-	private static string transparentFadeShadowedRender =  "#define alphablend";
-	private static string transparentDitheredRender = "#define dithered";
+	private static string cutoutRender = "	#define cutout";
+	private static string transparentRender = "	#define alphablend";
+	private static string transparentShadowedRender =  "	#define alphablend";
+	private static string transparentFadeRender =  "	#define alphablend";
+	private static string transparentFadeShadowedRender =  "	#define alphablend";
+	private static string transparentDitheredRender = "	#define dithered";
 
 	//Strings for Fallback
-	private static string cutoutFallback = "Fallback \"Transparent/Cutout/Diffuse\"";
-	private static string transparentFallback = "Fallback \"Transparent/Diffuse\"";
-	private static string transparentShadowedFallback = "Fallback \"Transparent/Diffuse\"";
-	private static string transparentFadeFallback = "Fallback \"Transparent/Diffuse\"";
-	private static string transparentFadeShadowedFallback = "Fallback \"Transparent/Diffuse\"";
-	private static string transparentDitheredFallback = "Fallback \"Transparent/Cutout/Diffuse\"";
+	private static string cutoutFallback = "	Fallback \"Transparent/Cutout/Diffuse\"";
+	private static string transparentFallback = "	Fallback \"Transparent/Diffuse\"";
+	private static string transparentShadowedFallback = "	Fallback \"Transparent/Diffuse\"";
+	private static string transparentFadeFallback = "	Fallback \"Transparent/Diffuse\"";
+	private static string transparentFadeShadowedFallback = "	Fallback \"Transparent/Diffuse\"";
+	private static string transparentDitheredFallback = "	Fallback \"Transparent/Cutout/Diffuse\"";
 
 	//Strings for Pragma
-	private static string cutoutPragma = "#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
-	private static string transparentPragma = "#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
-	private static string transparentShadowedPragma = "#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
-	private static string transparentFadePragma = "#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
-	private static string transparentFadeShadowedPragma= "#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
-	private static string transparentDitheredPragma = "#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
+	private static string cutoutPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
+	private static string transparentPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
+	private static string transparentShadowedPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
+	private static string transparentFadePragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
+	private static string transparentFadeShadowedPragma= "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
+	private static string transparentDitheredPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
 	
 	//Strings for Blend
 	private static string cutoutBlend = "";

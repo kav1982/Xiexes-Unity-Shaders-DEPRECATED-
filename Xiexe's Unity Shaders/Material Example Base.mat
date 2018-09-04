@@ -22,6 +22,10 @@ Material:
         m_Texture: {fileID: 8900000, guid: 400c139eefcba334d88fae7b76fd0322, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DitherTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissiveTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -65,11 +69,13 @@ Material:
     m_Floats:
     - _Culling: 2
     - _Cutoff: 0.5
+    - _DitherScale: 10
     - _Emissive: 0
     - _IndirectType: 0
     - _MatcapStyle: 1
     - _Metallic: 0
     - _Offset: 0
+    - _RampColor: 1
     - _RampDir: 1
     - _ReadMask: 255
     - _ReflSmoothness: 1

@@ -4,8 +4,28 @@ using UnityEngine;
 using System.IO;
 
 public class XSStyles : MonoBehaviour {
+	public static string uiPath;
+	private static GUISkin skin;
+
+	[UnityEditor.Callbacks.DidReloadScripts]
+    private static void setupIcons(){
+        string[] guids1 = AssetDatabase.FindAssets("XSShaderGenerator", null);
+		string untouchedString = AssetDatabase.GUIDToAssetPath(guids1[0]);
+		string[] splitString = untouchedString.Split('/');
+
+		ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
+		ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
+					
+		uiPath = string.Join("/", splitString) + "/Editor/Resources/";
+        //-----
+
+		skin = (GUISkin)Resources.Load("XSGuiSkin");
+
+        Debug.Log(uiPath);
+    }
+
 	public static class Styles{
-		public static GUIContent version = new GUIContent("XSToon v1.4 BETA 6", "The currently installed version of XSToon.");
+		public static GUIContent version = new GUIContent("XSToon v1.4 BETA 7", "The currently installed version of XSToon.");
 	}
 
 	// Labels
@@ -27,6 +47,16 @@ public class XSStyles : MonoBehaviour {
         });
 	}
 
+	
+	public static void doLabelSmall(string text){
+			GUILayout.Label(text, new GUIStyle(EditorStyles.label)
+        {
+            alignment = TextAnchor.LowerLeft,
+            wordWrap = true,
+            fontSize = 10
+        });
+	}
+	// ---- 
 
 	static public GUIStyle _LineStyle;
 	static public GUIStyle LineStyle
@@ -44,7 +74,25 @@ public class XSStyles : MonoBehaviour {
 		}
 	}
 
-	//GUI
+	//GUI Buttons
+	static public void callGradientEditor(){
+		GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+                GUI.skin = null;
+				if(GUILayout.Button("Open Gradient Editor", GUILayout.Width(200), GUILayout.Height(20))){
+                    XSGradientEditor.Init();
+                }
+        GUILayout.EndHorizontal();
+	}
+
+	//------
+
+	//Help Box
+	public static void HelpBox(string message, MessageType type){
+		EditorGUILayout.HelpBox(message, type);
+	}
+	
+	//GUI Lines
 	static public void Separator()
 	{
 		GUILayout.Space(4);
@@ -80,5 +128,34 @@ public class XSStyles : MonoBehaviour {
 			GUI.color = orgColor;
 		}
 	}
+	// --------------
 
+
+
+	//Help Buttons
+	public static void helpPopup(bool showBox, string title, string message, string button)
+	{
+		GUI.skin = skin;
+		if(GUILayout.Button("", "helpButton", GUILayout.Width(16), GUILayout.Height(16))){
+            showBox = true;
+            if(showBox == true){
+                EditorUtility.DisplayDialog(title,
+					                        message, button);
+            }
+		}
+	}
+
+	//Find Asset Path
+	public static void findAssetPath(string finalFilePath)
+	{
+		string[] guids1 = AssetDatabase.FindAssets("XSShaderGenerator", null);
+		string untouchedString = AssetDatabase.GUIDToAssetPath(guids1[0]);
+		string[] splitString = untouchedString.Split('/');
+
+		ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
+		ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
+					
+		finalFilePath = string.Join("/", splitString);
+		//return finalFilePath;
+	}
 }
