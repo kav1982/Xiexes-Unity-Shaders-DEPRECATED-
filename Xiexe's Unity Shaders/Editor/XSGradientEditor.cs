@@ -11,11 +11,27 @@ public class XSGradientEditor : EditorWindow {
 	// Use this for initialization
 	static void Init(){
 		XSGradientEditor window = EditorWindow.GetWindow<XSGradientEditor>(true, "XSToon: Gradient Editor", true);
-		window.minSize = new Vector2(300,60);
-		window.maxSize = new Vector2(300,60);
+		window.minSize = new Vector2(300,75);
+		window.maxSize = new Vector2(300,75);
 	}
 
+	// resolution presets
+
+	public enum resolutions{
+		Tiny,
+		Small,
+		Medium,
+		Large
+    }
+	public resolutions res;
+
+	int width = 128;
+	int height = 8;
+	// -----
+
 	void OnGUI(){
+
+		
 		if(gradient == null)
 		{
 			gradient = new Gradient();
@@ -25,10 +41,29 @@ public class XSGradientEditor : EditorWindow {
 			SerializedProperty colorGradient = serializedGradient.FindProperty("gradient");
 			EditorGUILayout.PropertyField(colorGradient, true, null);
 			serializedGradient.ApplyModifiedProperties();
+		
+		res = (resolutions)EditorGUILayout.EnumPopup("Resolution: ", res);
+			
+			switch(res){
+				case resolutions.Large:
+					width = 512;
+					break;
+				
+				case resolutions.Medium:
+					width = 256;
+					break;
+				
+				case resolutions.Small:
+					width = 128;
+					break;
+				
+				case resolutions.Tiny:
+					width = 64;
+					break;
+			}
+			
 			if(gradient != null)
 			{
-				int width = 128;
-				int height = 8;
 
 				Texture2D tex = new Texture2D(width, height, TextureFormat.RGB24, false);
 
@@ -79,6 +114,9 @@ public class XSGradientEditor : EditorWindow {
 		if (texture != null)
         {
 			texture.wrapMode = TextureWrapMode.Clamp;
+			texture.maxTextureSize = 512;
+			texture.mipmapEnabled = false;
+			texture.textureCompression = TextureImporterCompression.Uncompressed;
 			texture.SaveAndReimport();
 			AssetDatabase.Refresh();
         }
