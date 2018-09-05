@@ -174,8 +174,6 @@
 			//We don't need to use the rounded NdotL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
 			float remappedRamp = NdotL * 0.5 + 0.5;
 			float remappedRampBaked = ((shadeSH9Map + 1) * 0.5);
-			float2 horizontalRamp = float2(remappedRamp , 0.0);
-			float2 verticalRamp = float2(0.0 , remappedRamp);
 			
 			float4 ase_vertex4Pos = mul( unity_WorldToObject, float4( i.worldPos , 1 ) );
 			float4 vertexWorldPos = mul(unity_ObjectToWorld,ase_vertex4Pos);
