@@ -19,7 +19,7 @@ public class XSStyles : MonoBehaviour {
 		uiPath = string.Join("/", splitString) + "/Editor/Resources/";
         //-----
 
-		skin = (GUISkin)Resources.Load("XSGuiSkin");
+		skin = (GUISkin)AssetDatabase.LoadAssetAtPath<GUISkin>(uiPath + "XSGuiSkin.guiskin");
 
         Debug.Log(uiPath);
     }
