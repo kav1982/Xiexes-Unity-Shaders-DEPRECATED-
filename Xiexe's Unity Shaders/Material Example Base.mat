@@ -22,10 +22,6 @@ Material:
         m_Texture: {fileID: 8900000, guid: 400c139eefcba334d88fae7b76fd0322, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _DitherTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _EmissiveTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -69,9 +65,7 @@ Material:
     m_Floats:
     - _Culling: 2
     - _Cutoff: 0.5
-    - _DitherScale: 10
     - _Emissive: 0
-    - _IndirectType: 0
     - _MatcapStyle: 1
     - _Metallic: 0
     - _Offset: 0
@@ -84,7 +78,6 @@ Material:
     - _RimWidth: 0.2
     - _RimlightType: 0
     - _Saturation: 1
-    - _ShadowIntensity: 0.3
     - _ShadowType: 0
     - _SpecularArea: 25
     - _SpecularIntensity: 5
@@ -111,6 +104,5 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
     - _NormalTiling: {r: 1, g: 1, b: 0, a: 0}
-    - _ShadowTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _SimulatedLightDirection: {r: 0, g: 45, b: 90, a: 0}
     - _SpecularPatternTiling: {r: 20, g: 20, b: 0, a: 0}

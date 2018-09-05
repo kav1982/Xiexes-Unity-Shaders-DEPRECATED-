@@ -374,13 +374,13 @@ public class XSToonEditor : ShaderGUI
                 //-----
 
                 //Baked Lighting Settings
-                XSStyles.Separator();
-                EditorGUILayout.BeginHorizontal();
-                    GUILayout.Label("Baked Lighting Settings", EditorStyles.boldLabel);
-                    XSStyles.helpPopup(showHelp, "Baked Light Direction", "This is a fallback light direction that will only show in baked lighting. \n\nThis setting will soon be deprecated in favor of a method that actually gets proper directionality.", "Okay");
-                EditorGUILayout.EndHorizontal();
-                EditorGUILayout.Space();
-                materialEditor.ShaderProperty(simLightDir, Styles.simLightText);
+                // XSStyles.Separator();
+                // EditorGUILayout.BeginHorizontal();
+                //     GUILayout.Label("Baked Lighting Settings", EditorStyles.boldLabel);
+                //     XSStyles.helpPopup(showHelp, "Baked Light Direction", "This is a fallback light direction that will only show in baked lighting. \n\nThis setting will soon be deprecated in favor of a method that actually gets proper directionality.", "Okay");
+                // EditorGUILayout.EndHorizontal();
+                // EditorGUILayout.Space();
+                // materialEditor.ShaderProperty(simLightDir, Styles.simLightText);
                 GUI.skin = null;
                 if (advMode.floatValue == 1)
                 {

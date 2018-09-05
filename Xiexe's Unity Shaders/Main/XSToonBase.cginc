@@ -136,22 +136,27 @@
 			float3 ase_worldNormal = WorldNormalVector( i, float3( 0, 0, 1 ) );
 			float3 ase_vertexNormal = mul( unity_WorldToObject, float4( ase_worldNormal, 0 ) );
 			float4 worldNormals = mul(unity_ObjectToWorld,float4( ase_vertexNormal , 0.0 ));
-			float4 lerpedNormals = lerp( float4( WorldNormalVector( i , normalMap ) , 0.0 ) , worldNormals , 0.3);
-			float4 WSvertexNormals = lerpedNormals;
+			float4 WSvertexNormals = lerp( float4( WorldNormalVector( i , normalMap ) , 0.0 ) , worldNormals , 0.3);
+			// float4 WSvertexNormals = lerpedNormals;
 
 			//We're sampling ShadeSH9 at 0,0,0 to just get the color. In the future, this may be upgraded to get directionality as well.
-			float3 shadeSH9 = ShadeSH9(float4(0,0,0,1));
+			half3 shadeSH9 = ShadeSH9(float4(0,0,0,1));
+			//Do another shadeSH9 sample to get directionality from light probes, but only from the strongest averaged direction.
+			//This gets rid of the small artifcat normally present in ShadeSH9, which is the small round cut in the back of the shadow.
+			half3 shadeSH9Light = ShadeSH9(float4(WSvertexNormals.xyz,1));
+			half3 reverseShadeSH9Light = ShadeSH9(float4(-WSvertexNormals.xyz,1));
+			half3 shadeSH9Map = (shadeSH9Light - reverseShadeSH9Light)/2;
 			float3 lightColor = _LightColor0; 
 
 			//Worldspace light direction and simulated light directions
 			float3 worldLightDir = normalize( UnityWorldSpaceLightDir( i.worldPos ) );
-			float4 simulatedLight = normalize( _SimulatedLightDirection );
+			float4 simulatedLight = normalize(float4(shadeSH9Map,1));//normalize( _SimulatedLightDirection );
 
 		//figure out whether we are in a realtime lighting scnario, or baked, and return it as a 0, or 1 (1 for realtime, 0 for baked)
 			float light_Env = float(any(_WorldSpaceLightPos0.xyz));
 
 		//we use the simulated light direction if we're in a baked scenario
-			float4 light_Dir = simulatedLight;
+			float4 light_Dir = simulatedLight.xyzz;
 
 		//otherwise, we use the actual light direction
 			if( light_Env == 1)
@@ -168,6 +173,7 @@
 			
 			//We don't need to use the rounded NdotL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
 			float remappedRamp = NdotL * 0.5 + 0.5;
+			float remappedRampBaked = ((shadeSH9Map + 1) * 0.5);
 			float2 horizontalRamp = float2(remappedRamp , 0.0);
 			float2 verticalRamp = float2(0.0 , remappedRamp);
 			
@@ -253,7 +259,7 @@
 			#endif
 
 		//Recieved Shadows and lighting
-			float4 shadowRamp = tex2D( _ShadowRamp, float2(remappedRamp,remappedRamp));	
+			float3 shadowRamp = tex2D( _ShadowRamp, lerp(float2(remappedRamp,remappedRamp), float2(remappedRampBaked,remappedRampBaked), 1-light_Env)).xyz;	
 			
 			//we initialize finalshadow here, but we will be editing this based on the lighting env below
 			float3 finalShadow = saturate(((ase_lightAtten * .5) - (1-shadowRamp.r)));
@@ -301,7 +307,7 @@
 		//calculate the final lighting for our lighting model
 																		//Can probably be cleaned to look nicer
 			float3 finalAddedLight = (finalRim + specularRefl) * saturate((saturate(MainColor + 0.5) * pow(finalLight, 2) * (shadowRamp))).rgb;
-		    float3 finalColor = MainColor;
+		    float3 finalColor = MainColor.xyz;
 
 		//if we have reflections turned on, return the final color with reflections
 			#ifdef _REFLECTIONS_ON

@@ -7,14 +7,6 @@ using System.Linq;
 
 public class XSShaderGenerator : EditorWindow
 {
-
-    [MenuItem("Xiexe/Tools/Shader Generator")]
-    public static void ShowWindow()
-    {
-        XSShaderGenerator window = EditorWindow.GetWindow<XSShaderGenerator>(true, "XSToon: Shader Generator", true);
-		window.minSize = new Vector2(350f, 300f);
-		window.maxSize = new Vector2(350f, 300f);
-    }
 	
 	//partial paths for generating temp and final shader finals, 
 	//we add on to these later as needed after reverse engineering where our folder is located on disk.
@@ -95,6 +87,20 @@ public class XSShaderGenerator : EditorWindow
 	private static bool transparentFadeShadowed = false;
 	private static bool transparentDithered = false;
 
+	private static bool exists = false;
+	private static string whichExists = ""; 
+	private static bool instance;
+	[MenuItem("Xiexe/Tools/Shader Generator")]
+    public static void ShowWindow()
+    {
+        XSShaderGenerator window = EditorWindow.GetWindow<XSShaderGenerator>(true, "XSToon: Shader Generator", true);
+		window.minSize = new Vector2(350f, 380f);
+		window.maxSize = new Vector2(350f, 380f);
+		instance = false;
+		GetPathOfFolder(cutout, transparent, transparentShadowed, transparentFade, transparentFadeShadowed, transparentDithered, instance);
+    }
+
+
     void OnGUI()
     {	
 		EditorGUI.BeginChangeCheck();
@@ -114,8 +120,12 @@ public class XSShaderGenerator : EditorWindow
 		EditorGUILayout.Space();
 
 		if (GUILayout.Button("Generate Shader(s)")){
-			GetPathOfFolder(cutout, transparent, transparentShadowed, transparentFade, transparentFadeShadowed, transparentDithered);
-			Debug.Log("Generated Shader(s)");
+			instance = true;
+			GetPathOfFolder(cutout, transparent, transparentShadowed, transparentFade, transparentFadeShadowed, transparentDithered, instance);
+		}
+
+		if(exists == true){
+			XSStyles.HelpBox("The Current Shaders have already been generated:" + whichExists, MessageType.Warning);
 		}
 		
 		// //THE BIG BAD DEBUGGIN BUTTON
@@ -126,7 +136,7 @@ public class XSShaderGenerator : EditorWindow
 
 //Get the folder path of the root of my shader packages - we do this by finding a known uniwue file, in this case our generator, and then stepping back the known amount of folders, in this case, 2.
 //we then call the create function with our final root path in mind. 
-	static void GetPathOfFolder(bool cutout, bool transparent, bool transparentShadowed, bool transparentFade, bool transparentFadeShadowed, bool transparentDithered)
+	static void GetPathOfFolder(bool cutout, bool transparent, bool transparentShadowed, bool transparentFade, bool transparentFadeShadowed, bool transparentDithered, bool instance)
 	{
 
 		string[] guids1 = AssetDatabase.FindAssets("XSShaderGenerator", null);
@@ -137,77 +147,107 @@ public class XSShaderGenerator : EditorWindow
 		ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
 		
 		string finalFilePath = string.Join("/", splitString);
-		CheckForShader(finalFilePath, cutout, transparent, transparentShadowed, transparentFade, transparentFadeShadowed, transparentDithered);
+		CheckForShader(finalFilePath, cutout, transparent, transparentShadowed, transparentFade, transparentFadeShadowed, transparentDithered, instance);
 	}
 
 //After getting the path of our folders, we need to check to see if the shader already exists - if it does, we need to do a popup
 //That asks if you want to overwrite it, or not. 
-	static void CheckForShader(string finalFilePath, bool cutout, bool transparent, bool transparentShadowed, bool transparentFade, bool transparentFadeShadowed, bool transparentDithered)
+	static void CheckForShader(string finalFilePath, bool cutout, bool transparent, bool transparentShadowed, bool transparentFade, bool transparentFadeShadowed, bool transparentDithered, bool instance)
 	{
 		string shaderPath = finalFilePath + destFile;
 		string[] existingShaders = {};
+		string joined = "aaa";
 		
-		int existsBox = 0;
+		switch (instance){
+			case true:
+				int existsBox = 0;
 
-		if (File.Exists(shaderPath + "XSToonCutout.shader") && cutout == true){
-			ArrayUtility.Add(ref existingShaders, "XSToonCutout");
-			existsBox = 1;
-		}
-
-		if (File.Exists(shaderPath + "XSToonTransparent.shader") && transparent == true){
-			ArrayUtility.Add(ref existingShaders, "XSToonTransparent");
-			existsBox = 1;
-		}
-
-		if (File.Exists(shaderPath + "XSToonTransparentShadowed.shader") && transparentShadowed == true){
-			ArrayUtility.Add(ref existingShaders, "XSToonTransparentShadowed");
-			existsBox = 1;
-		}
-
-		if (File.Exists(shaderPath + "XSToonFade.shader") && transparentFade == true){
-			ArrayUtility.Add(ref existingShaders, "XSToonFade");
-			existsBox = 1;
-		}
-		if (File.Exists(shaderPath + "XSToonFadeShadowed.shader") && transparentFadeShadowed == true){
-			ArrayUtility.Add(ref existingShaders, "XSToonFadeShadowed");
-			existsBox = 1;
-		}
-		if (File.Exists(shaderPath + "XSToonTransparentDithered.shader") && transparentDithered == true){
-			ArrayUtility.Add(ref existingShaders, "XSToonTransparentDithered");
-			existsBox = 1;
-		}
-
-		string joined = "\n\n - " + string.Join(", ", existingShaders);
-		
-		if(existsBox == 0){
-			Create(finalFilePath);
-		}
-		else if(existsBox == 1) {
-			bool option = EditorUtility.DisplayDialog("Replace Shaders?",
-					"One or more of the selected Shaders already exist! Are you sure you want to overwrite them?" + joined
-					, "Do it!", "Don't do it!");
-			
-			switch (option)
-			{
-				case true:
-					Debug.Log("Continue To Generate");
-						for (int i = 0; i < existingShaders.Length; i++)
-						{
-							File.Delete(shaderPath + existingShaders[i] + ".shader");
-						}
-					Create(finalFilePath);
-					break;
-				
-				case false: 
-					Debug.Log("Cancelled Generation");
-					break;
-				
-				default:
-					Debug.LogError("Unrecognized option.");
-					break;
+				if (File.Exists(shaderPath + "XSToonCutout.shader") && cutout == true){
+					ArrayUtility.Add(ref existingShaders, "XSToonCutout");
+					existsBox = 1;
 				}
-			}
+				if (File.Exists(shaderPath + "XSToonTransparent.shader") && transparent == true){
+					ArrayUtility.Add(ref existingShaders, "XSToonTransparent");
+					existsBox = 1;
+				}
+				if (File.Exists(shaderPath + "XSToonTransparentShadowed.shader") && transparentShadowed == true){
+					ArrayUtility.Add(ref existingShaders, "XSToonTransparentShadowed");
+					existsBox = 1;
+				}
+				if (File.Exists(shaderPath + "XSToonFade.shader") && transparentFade == true){
+					ArrayUtility.Add(ref existingShaders, "XSToonFade");
+					existsBox = 1;
+				}
+				if (File.Exists(shaderPath + "XSToonFadeShadowed.shader") && transparentFadeShadowed == true){
+					ArrayUtility.Add(ref existingShaders, "XSToonFadeShadowed");
+					existsBox = 1;
+				}
+				if (File.Exists(shaderPath + "XSToonTransparentDithered.shader") && transparentDithered == true){
+					ArrayUtility.Add(ref existingShaders, "XSToonTransparentDithered");
+					existsBox = 1;
+				}
+
+				joined = ("\n\n- ") + string.Join("\n- ", existingShaders);
+				
+				if(existsBox == 0){
+						Create(finalFilePath);
+					}
+					else if(existsBox == 1) {
+						bool option = EditorUtility.DisplayDialog("Replace Shaders?",
+								"You've selected shaders that have already been generated, are you sure you want to overwrite them?" + joined
+								, "Overwrite", "Cancel");
+						
+						switch (option)
+						{
+							case true:
+								Debug.Log("Continue To Generate");
+									for (int i = 0; i < existingShaders.Length; i++)
+									{
+										File.Delete(shaderPath + existingShaders[i] + ".shader");
+									}
+								Create(finalFilePath);
+								break;
+							
+							case false: 
+								Debug.Log("Cancelled Generation");
+								break;
+							
+							default:
+								Debug.LogError("Unrecognized option.");
+								break;
+							}
+						}
+				break;
+
+				case false:
+					if (File.Exists(shaderPath + "XSToonCutout.shader")){
+							ArrayUtility.Add(ref existingShaders, "XSToonCutout");
+							exists = true;
+						}
+					if (File.Exists(shaderPath + "XSToonTransparent.shader")){
+							ArrayUtility.Add(ref existingShaders, "XSToonTransparent");
+							exists = true;
+						}
+					if (File.Exists(shaderPath + "XSToonTransparentShadowed.shader")){
+							ArrayUtility.Add(ref existingShaders, "XSToonTransparentShadowed");
+							exists = true;
+						}
+					if (File.Exists(shaderPath + "XSToonFade.shader")){
+							ArrayUtility.Add(ref existingShaders, "XSToonFade");
+							exists = true;
+						}
+					if (File.Exists(shaderPath + "XSToonFadeShadowed.shader")){
+							ArrayUtility.Add(ref existingShaders, "XSToonFadeShadowed");
+							exists = true;
+						}
+					if (File.Exists(shaderPath + "XSToonTransparentDithered.shader")){
+							ArrayUtility.Add(ref existingShaders, "XSToonTransparentDithered");
+							exists = true;
+						}
+					whichExists = ("\n\n- ") + string.Join("\n- ", existingShaders);
+				break;
 		}
+	}
 //In the create function we pass on the file path and we check to see which shaders are to be created, and run the function for each one that's been checked off.
 	static void Create(string finalFilePath)
 		{
@@ -215,32 +255,26 @@ public class XSShaderGenerator : EditorWindow
 			if(cutout == true){
 				index = 0;
 				WriteShader(finalFilePath, index);
-				Debug.Log("Generate Cutout");
 			}
 			if(transparent == true){
 				index = 1;
 				WriteShader(finalFilePath, index);
-				Debug.Log("Generate Transparent");
 			}
 			if(transparentShadowed == true){
 				index = 2;
 				WriteShader(finalFilePath, index);
-				Debug.Log("Generate Transparent w/ Shadows");
 			}
 			if(transparentFade == true){
 				index = 3;
 				WriteShader(finalFilePath, index);
-				Debug.Log("Generate Transparent Fade");
 			}
 			if(transparentFadeShadowed == true){
 				index = 4;
 				WriteShader(finalFilePath, index);
-				Debug.Log("Generate Transparent Fade w/ Shadows");
 			}
 			if(transparentDithered == true){
 				index = 5;
 				WriteShader(finalFilePath, index);
-				Debug.Log("Generate Dithered");
 			}
 		}
 
@@ -333,5 +367,6 @@ public class XSShaderGenerator : EditorWindow
 	{
 		FileUtil.MoveFileOrDirectory(dest, final);
 		AssetDatabase.ImportAsset(final);
+		Debug.Log("Generated Shader: " + name);
 	}
 }

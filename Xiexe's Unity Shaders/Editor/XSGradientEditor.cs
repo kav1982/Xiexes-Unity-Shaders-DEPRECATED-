@@ -10,19 +10,19 @@ public class XSGradientEditor : EditorWindow {
 	public static Texture shadowRamp;
 	public string finalFilePath;
 	public enum resolutions{
-		Tiny,
-		Small,
-		Medium,
-		Large
+		Tiny64x8,
+		Small128x8,
+		Medium256x8,
+		Large512x8
     }
 	public resolutions res;
 	
 	[MenuItem ("Xiexe/Tools/Gradient Editor")]
 	// Use this for initialization
 	static public void Init(){
-		XSGradientEditor window = EditorWindow.GetWindow<XSGradientEditor>(true, "XSToon: Gradient Editor", true);
-		window.minSize = new Vector2(300,160);
-		window.maxSize = new Vector2(300,160);
+		XSGradientEditor window = EditorWindow.GetWindow<XSGradientEditor>(false, "XSToon: Gradient Editor", true);
+		window.minSize = new Vector2(300,170);
+		window.maxSize = new Vector2(301,171);
 	}
 
 	public void OnGUI(){
@@ -45,19 +45,19 @@ public class XSGradientEditor : EditorWindow {
 		res = (resolutions)EditorGUILayout.EnumPopup("Resolution: ", res);
 			
 			switch(res){
-				case resolutions.Large:
+				case resolutions.Large512x8:
 					width = 512;
 					break;
 				
-				case resolutions.Medium:
+				case resolutions.Medium256x8:
 					width = 256;
 					break;
 				
-				case resolutions.Small:
+				case resolutions.Small128x8:
 					width = 128;
 					break;
 				
-				case resolutions.Tiny:
+				case resolutions.Tiny64x8:
 					width = 64;
 					break;
 			}
@@ -89,7 +89,7 @@ public class XSGradientEditor : EditorWindow {
 				}
 		}
 
-		XSStyles.HelpBox("You can use this to create a custom shadow ramp. \nYou must save the asset with the save button to apply changes. \n\n - Click the Gradient box. \n - Choose resolution. \n - Save.", MessageType.Info);
+		XSStyles.HelpBox("You can use this to create a custom shadow ramp. \nYou must save the asset with the save button to apply changes. \n\n - Click the Gradient box. \n - Choose resolution. \n - Save. \n - Drag texture into slot.", MessageType.Info);
 	}
 
 	static void GenTexture(Texture2D tex, string path)
