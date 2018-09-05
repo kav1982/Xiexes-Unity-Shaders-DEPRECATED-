@@ -60,7 +60,7 @@ public class XSShaderGenerator : EditorWindow
 	private static string transparentPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
 	private static string transparentShadowedPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
 	private static string transparentFadePragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
-	private static string transparentFadeShadowedPragma= "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
+	private static string transparentFadeShadowedPragma= "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
 	private static string transparentDitheredPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
 	
 	//Strings for Blend
