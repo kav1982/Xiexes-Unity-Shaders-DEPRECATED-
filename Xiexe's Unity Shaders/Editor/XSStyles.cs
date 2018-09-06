@@ -26,9 +26,10 @@ public class XSStyles : MonoBehaviour
         Debug.Log(uiPath);
     }
 
+    public static string ver = "1.4";
     public static class Styles
     {
-        public static GUIContent version = new GUIContent("XSToon v1.4", "The currently installed version of XSToon.");
+        public static GUIContent version = new GUIContent("XSToon v" + ver, "The currently installed version of XSToon.");
     }
 
     // Labels
@@ -172,29 +173,29 @@ public class XSStyles : MonoBehaviour
 
 
     //exrta buttons
-    public static void githubButton()
+    public static void githubButton(int Width, int Height)
     {
         GUI.skin = skin;
-        if (GUILayout.Button("", "github", GUILayout.Width(20), GUILayout.Height(20)))
+        if (GUILayout.Button("", "github", GUILayout.Width(Width), GUILayout.Height(Height)))
         {
             Application.OpenURL("https://github.com/Xiexe");
         }
     }
 
-    public static void discordButton()
+    public static void discordButton(int Width, int Height)
     {
         GUI.skin = skin;
-        if (GUILayout.Button("", "discord", GUILayout.Width(20), GUILayout.Height(20)))
+        if (GUILayout.Button("", "discord", GUILayout.Width(Width), GUILayout.Height(Height)))
         {
             Application.OpenURL("https://discord.gg/M6MGNnT");
         }
 
     }
 
-    public static void patreonButton()
+    public static void patreonButton(int Width, int Height)
     {
         GUI.skin = skin;
-        if (GUILayout.Button("", "patreon", GUILayout.Width(20), GUILayout.Height(20)))
+        if (GUILayout.Button("", "patreon", GUILayout.Width(Width), GUILayout.Height(Height)))
         {
             Application.OpenURL("https://www.patreon.com/xiexe");
         }

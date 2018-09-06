@@ -63,11 +63,10 @@ public class XSToonEditor : ShaderGUI
 
         EditorGUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        XSStyles.discordButton();
-        EditorGUILayout.Space();
-        XSStyles.patreonButton();
-        EditorGUILayout.Space();
-        XSStyles.githubButton();
+        XSStyles.discordButton(20, 20);
+        GUILayout.Space(2);
+        XSStyles.patreonButton(20, 20);
+        XSStyles.githubButton(20, 20);
         GUILayout.FlexibleSpace();
         EditorGUILayout.EndHorizontal();
     }
