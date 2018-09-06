@@ -360,8 +360,8 @@
 
 		//dithered
 			#ifdef dithered
-				 // Screen-door transparency: Discard pixel if below threshold.
-				 // This may be replaced in the future, as there are better ways to do this. 
+				//  Screen-door transparency: Discard pixel if below threshold.
+				//  This may be replaced in the future, as there are better ways to do this. 
     			float4x4 thresholdMatrix =
     			{  1.0 / 17.0,  9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0,
     			  13.0 / 17.0,  5.0 / 17.0, 15.0 / 17.0,  7.0 / 17.0,
@@ -374,10 +374,12 @@
 				pos *= _ScreenParams.xy; // pixel position
    					
 				 #ifdef UNITY_SINGLE_PASS_STEREO
-				 	clip((MainTex.a * _Color.a) - thresholdMatrix[fmod((pos.x * 2), 4)] * _RowAccess[fmod(pos.y, 4)]);
+				 	clip((MainTex.a * _Color.a) - (thresholdMatrix[fmod((pos.x * 2), 4)] * _RowAccess[fmod(pos.y, 4)]));
 				 #else
-					clip((MainTex.a * _Color.a) - thresholdMatrix[fmod(pos.x, 4)] * _RowAccess[fmod(pos.y, 4)]);
+					clip((MainTex.a * _Color.a) - (thresholdMatrix[fmod(pos.x, 4)] * _RowAccess[fmod(pos.y, 4)]));
 				 #endif
+
+
 			#endif
 
 			return c;
