@@ -10,12 +10,14 @@ This shader may not be perfect! Below, you will find a set of valuable informati
 
 You can join my Discord server where I will be releasing periodic updates and taking bug reports over at this link: https://discord.gg/M6MGNnT
 
-DISCLAIMER: TO GET BAKED LIGHTING SETTINGS TO SHOW ANY CHANGES YOU'RE MAKING, YOU MUST DISABLE ANY REALTIME LIGHTS IN YOUR SCENE, 
-OTHERWISE YOU WILL NOT SEE ANY CHANGES REALTIME.
+If you have any questions about what settings do what, you can click the "?" icon on the top left of each segment to get more information. 
+If you have even further questions, you can hover over each setting to get a breif description of what it does in depth.
+If you have EVEN futher questions, feel free to ask on Discord or on the VRCat forums, or, hell, even find me in VRChat.
 
-There are eight shader in total, you can find them located in the "Main" folder.
+There are eight shader in total. By default, they aren't in any folder, you will need to generate them using my generator(Don't worry, it's just a single button click, nothing complex) - this is to cut down on import times.
 
-They are as follows. 
+To access the generator, find "Xiexe" in the toolbar at the top of Unity, and select Tools > Shader Generator.
+You can then select any number of the shaders on that list and generate them. They may take awhile to generate, as Unity will need to compile them.
 
 Opaque Shaders:
         XSToon - 
@@ -59,7 +61,7 @@ I have included a few interesting ones by default, but I encourage you to be exp
 
         The ramp can be sharp or smooth. If you want toon shading, you'd make it a sharp ramp. E.X. "TwoToneRamp" or "ThreeToneRamp"
 
-        If you want smooth shading, just do a smooth black to white gradient.
+        If you want smooth shading, just do a smooth gradient.
 
         I would recommend not going to full black on any ramps, as that can cause lighting problems in very dark rooms. 
             (Though its not the end of the world, I just think it looks bad)
@@ -68,23 +70,15 @@ I have included a few interesting ones by default, but I encourage you to be exp
 
         Oh, and my Shader supports both vertical and horizontal ramps out of the box. That means you can transfer any over from MMD or whatever else you may be getting shadow ramps from.
 
-    If you make your own, it is best that you set the texture to "Clamp" under the import settings, as it could cause some issues if it's not.
+        Since 1.4, you can generate your own ramps via the "Gradient Editor"  -  you can access this in the same way as the generator,
+        or by clicking the Gradient Editor button within any given material using my shader. 
 
-The final option is the "Simulated Light Direction." 
-    My shader detects if there is a realtime light affecting you, and if there is, it uses that.
-    If there is no light, it uses a baked in direction that you choose using "Simulated Light Direction."
-        To properly test this, you should disable any realtime lights in your scene. 
-        It will not change otherwise, since it will be using the realtime light's direction.
+        Once you save the file, you will need to drag it manually into the shadow ramp texture slot.
 
-
-Finally, I have included a material called "Material example" that is set up to use settings that I personally like and feel look good,
-should you need it as reference, I recommend not changing it without duplicating it first. 
+Finally, I have included a material called "Material example", and "Material Example Hair" that is set up to use settings that I personally like and feel look good,
+should you need it as reference, I recommend not changing it without duplicating it first.
 
 Enjoy!
-
-P.S. If your shadows ever go entirely black, blame the map maker for not properly setting up lighting in the map. 
-This is only a problem if Ambient light color is set to black, and there are no light probes. The way my shader shows this is indeed accurate.
-
 
 STENCIL TUTORIAL:
 
@@ -112,15 +106,3 @@ STENCIL TUTORIAL:
 
 Note: For all shader varients, Use UV2 is only for models that have a second UV channel for the Normal map and Specular map, 
 leave this unchecked unless you're positive you have this.
-
-/////////////////////////////
-FOR ADVANCED USERS:
-
-This shader was made using amplify, but has been heavily rewritten, as it was needed to increase performance and fix lighting issues that were caused
-by amplifies limited power. 
-
-I strongly recommend you to not open it in Amplify, as it will probably break. It is best to just edit the code. You can find the entire lighting model in XSToonBase.cginc
-
-Once you make a change to that, it will change all of the rest of the shaders as it is included as the base code for each variant.
-
-////////////////////////////

@@ -16,7 +16,7 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(PBR,0,Stylized,1,Matcap,2,Matcap Cubemap,3)] _ReflType ("Reflection Type", Int) = 0
 		[Enum(Add,0,Multiply,1,Subtract,2)] _MatcapStyle ("Matcap Blend Mode", Int) = 1
 		[Enum(Dot,0,Anistropic,1)] _StylizedReflStyle ("StylizedReflStyle", Int) = 0
-		[Enum(Real,0,Fake,1)] _IndirectType ("Indirect Type", Int) = 0
+		[Enum(Use World Color, 0, Use Ramp Color, 1)] _RampColor ("Ramp Color", Int) = 1
 		
 		[NoScaleOffset]_ShadowRamp("Shadow Ramp", 2D) = "white" {}
 		[NoScaleOffset]_SpecularMap("Specular Map", 2D) = "black" {}
@@ -26,7 +26,6 @@ Shader "Xiexe/Toon/XSToon"
 		_BakedCube("Local Cubemap", Cube) = "black" {}
 		_SpecularPatternTiling("Specular Pattern Tiling", Vector) = (20,20,0,0)
 		_Color("Color Tint", Color) = (1,1,1,1)
-		_ShadowTint("Shadow Tint", Color) = (0.5, 0.5, 0.5, 1)
 		_MainTex("Main Tex", 2D) = "white" {}
 		[Normal]_Normal("Normal", 2D) = "bump" {}
 		_NormalTiling("NormalTiling", Vector) = (1,1,0,0)
@@ -39,7 +38,6 @@ Shader "Xiexe/Toon/XSToon"
 		_EmissiveTex("Emissive Tex", 2D) = "white" {}
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0) 
 		[HideInInspector]_Cutoff ("Cutout Amount", Float) = 0.5
-		_ShadowIntensity ("ShadowIntensity", Range(0,1)) = 0.3
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,2)) = 1
@@ -131,6 +129,7 @@ Shader "Xiexe/Toon/XSToon"
 		#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _MATCAP_ON
 		#pragma shader_feature _ _MATCAP_CUBEMAP_ON
+		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON
 
 
 		ENDCG
