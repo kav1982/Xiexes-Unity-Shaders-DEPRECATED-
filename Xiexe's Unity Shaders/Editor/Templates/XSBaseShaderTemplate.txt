@@ -41,6 +41,8 @@ Shader !name
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,2)) = 1
 		_Saturation("Saturation", Range(0.1,6)) = 1
+		_RimColor("Rimlight Tint", Color) = (1,1,1,1)
+		[Toggle]_SolidRimColor("Solid Rim Color", Float) = 0
 		
 		
         [NoScaleOffset]_DitherTex ("Dither Texture", 2D) = "white" {}

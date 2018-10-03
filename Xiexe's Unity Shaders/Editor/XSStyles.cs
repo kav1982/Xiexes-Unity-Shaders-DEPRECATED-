@@ -2,31 +2,30 @@
 using UnityEditor;
 using UnityEngine;
 using System.IO;
-
+ 
+[InitializeOnLoad]
 public class XSStyles : MonoBehaviour
 {
+    public static string ver = "1.4";
     public static string uiPath;
     private static GUISkin skin;
 
     [UnityEditor.Callbacks.DidReloadScripts]
     private static void setupIcons()
     {
-        string[] guids1 = AssetDatabase.FindAssets("XSShaderGenerator", null);
-        string untouchedString = AssetDatabase.GUIDToAssetPath(guids1[0]);
-        string[] splitString = untouchedString.Split('/');
 
-        ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
-        ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
-
-        uiPath = string.Join("/", splitString) + "/Editor/Resources/";
+        uiPath = XSStyles.findAssetPath(uiPath) + "/Editor/Resources/";
         //-----
 
         skin = (GUISkin)AssetDatabase.LoadAssetAtPath<GUISkin>(uiPath + "XSGuiSkin.guiskin");
 
-        Debug.Log(uiPath);
+        if (skin == null){
+            skin = (GUISkin)AssetDatabase.LoadAssetAtPath<GUISkin>(uiPath + "XSGuiSkin.guiskin");
+        }
+
+//        Debug.Log(uiPath);
     }
 
-    public static string ver = "1.4";
     public static class Styles
     {
         public static GUIContent version = new GUIContent("XSToon v" + ver, "The currently installed version of XSToon.");
@@ -158,7 +157,7 @@ public class XSStyles : MonoBehaviour
     }
 
     //Find Asset Path
-    public static void findAssetPath(string finalFilePath)
+    public static string findAssetPath(string finalFilePath)
     {
         string[] guids1 = AssetDatabase.FindAssets("XSShaderGenerator", null);
         string untouchedString = AssetDatabase.GUIDToAssetPath(guids1[0]);
@@ -168,7 +167,7 @@ public class XSStyles : MonoBehaviour
         ArrayUtility.RemoveAt(ref splitString, splitString.Length - 1);
 
         finalFilePath = string.Join("/", splitString);
-        //return finalFilePath;
+        return finalFilePath;
     }
 
 

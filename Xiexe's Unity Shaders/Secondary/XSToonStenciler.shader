@@ -7,6 +7,7 @@
 		_Stencil ("Stencil ID [0;255]", Float) = 0
 		// _ReadMask ("ReadMask [0;255]", Int) = 255
 		// _WriteMask ("WriteMask [0;255]", Int) = 255
+		[Enum(Off, 0, Front,1, Back, 2)] _Culling ("Culling Mode", Int) = 1
 		[Enum(UnityEngine.Rendering.CompareFunction)] _StencilComp ("Stencil Comparison", Int) = 8
 		[Enum(UnityEngine.Rendering.StencilOp)] _StencilOp ("Stencil Operation", Int) = 2
 		[Enum(UnityEngine.Rendering.StencilOp)] _StencilFail ("Stencil Fail", Int) = 0
@@ -20,7 +21,7 @@
 		Tags { "RenderType"="" "Queue" = "Geometry-2" }
 		LOD 100
 
-		Cull Front
+		Cull [_Culling]
 		Blend [_srcblend] [_dstblend]
 		ColorMask [_colormask]
 		ZTest [_ZTest]
