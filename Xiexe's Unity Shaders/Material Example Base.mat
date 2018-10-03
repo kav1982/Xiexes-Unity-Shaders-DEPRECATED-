@@ -8,7 +8,8 @@ Material:
   m_PrefabInternal: {fileID: 0}
   m_Name: Material Example Base
   m_Shader: {fileID: 4800000, guid: 7a9fb2bc3175a2240bd55b7c7300b32d, type: 3}
-  m_ShaderKeywords: _CUTOUT_ON _DYNAMICTOONLIGHTING_ON _VERTICALSHADOWRAMP_ON
+  m_ShaderKeywords: _CUTOUT_ON _DYNAMICTOONLIGHTING_ON _PBRREFL_ON _REFLECTIONS_ON
+    _VERTICALSHADOWRAMP_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -89,13 +90,13 @@ Material:
     - _StylelizedIntensity: 1
     - _StylizedReflStyle: 0
     - _UseOnlyBakedCube: 0
-    - _UseReflections: 1
+    - _UseReflections: 0
     - _UseUV2forNormalsSpecular: 0
     - _WriteMask: 255
     - _ZTest: 4
     - _ZWrite: 1
     - __dirty: 1
-    - _advMode: 0
+    - _advMode: 1
     - _colormask: 15
     - _dstblend: 0
     - _mode: 0

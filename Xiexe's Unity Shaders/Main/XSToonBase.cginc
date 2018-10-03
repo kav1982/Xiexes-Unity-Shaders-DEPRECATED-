@@ -78,6 +78,8 @@
 		 float _Saturation;
 		 float _MatcapStyle;
 		 float _RampColor;
+		 float3 _RimColor;
+		 float _SolidRimColor;
 
 
 		float3 ShadeSH9( float3 normal )
@@ -104,7 +106,6 @@
 			float3 worldViewDir = normalize((cameraPos - worldPos));
 			return worldViewDir;
 		}
-
 
 		inline half4 LightingStandardCustomLighting( inout SurfaceOutputCustomLightingCustom s, half3 viewDir, UnityGI gi )
 		{
@@ -139,18 +140,22 @@
 			float4 WSvertexNormals = lerp( float4( WorldNormalVector( i , normalMap ) , 0.0 ) , worldNormals , 0.3);
 			// float4 WSvertexNormals = lerpedNormals;
 
-			//We're sampling ShadeSH9 at 0,0,0 to just get the color. In the future, this may be upgraded to get directionality as well.
+			//We're sampling ShadeSH9 at 0,0,0 to just get the color.
 			half3 shadeSH9 = ShadeSH9(float4(0,0,0,1));
 			//Do another shadeSH9 sample to get directionality from light probes, but only from the strongest averaged direction.
 			//This gets rid of the small artifcat normally present in ShadeSH9, which is the small round cut in the back of the shadow.
 			half3 shadeSH9Light = ShadeSH9(float4(WSvertexNormals.xyz,1));
 			half3 reverseShadeSH9Light = ShadeSH9(float4(-WSvertexNormals.xyz,1));
-			half3 shadeSH9Map = (shadeSH9Light - reverseShadeSH9Light)/2;
+			half3 noAmbientShadeSH9Light = (shadeSH9Light - reverseShadeSH9Light)/2;
+			
+			float3 indirectLightSH = noAmbientShadeSH9Light * 0.5 + 0.533;
+			float averagedindirect = length(indirectLightSH)/sqrt(3.0);
+
 			float3 lightColor = _LightColor0; 
 
 			//Worldspace light direction and simulated light directions
 			float3 worldLightDir = normalize( UnityWorldSpaceLightDir( i.worldPos ) );
-			float4 simulatedLight = normalize(float4(shadeSH9Map,1));//normalize( _SimulatedLightDirection );
+			float4 simulatedLight = normalize(indirectLightSH.xyzz);//normalize( _SimulatedLightDirection );
 
 		//figure out whether we are in a realtime lighting scnario, or baked, and return it as a 0, or 1 (1 for realtime, 0 for baked)
 			float light_Env = float(any(_WorldSpaceLightPos0.xyz));
@@ -173,7 +178,7 @@
 			
 			//We don't need to use the rounded NdotL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
 			float remappedRamp = NdotL * 0.5 + 0.5;
-			float remappedRampBaked = ((shadeSH9Map + 1) * 0.5);
+			float remappedRampBaked = averagedindirect;//shadeSH9Map * 0.5 + 0.533;
 			
 			float4 ase_vertex4Pos = mul( unity_WorldToObject, float4( i.worldPos , 1 ) );
 			float4 vertexWorldPos = mul(unity_ObjectToWorld,ase_vertex4Pos);
@@ -184,7 +189,7 @@
 		//rimlight typing
 			float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(VdotN)), (1.0 - _RimWidth))) * _RimIntensity);
 			float sharpRim = (step(0.9, pow((1.0 - saturate(VdotN)), (1.0 - _RimWidth))) * _RimIntensity);
-			float finalRim = lerp(sharpRim, smoothRim, _RimlightType);
+			float3 finalRim = lerp(sharpRim, smoothRim, _RimlightType) * _RimColor;
 
 
 	//Do reflections
@@ -237,6 +242,7 @@
 					#endif
 				#endif
 		//Matcap	
+			//Note: This matcap is intended for VR. 
 				#ifdef _MATCAP_ON
 						roughMap = tex2D(_RoughMap, uv_MainTex);
 					#ifdef _MATCAP_CUBEMAP_ON

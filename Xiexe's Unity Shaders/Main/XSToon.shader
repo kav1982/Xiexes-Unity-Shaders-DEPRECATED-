@@ -1,4 +1,5 @@
-//The base of this shader was made in amplify - however it has been heavily altered. If you open this in amplify it will kill the shader, don't do it.
+//The base of this shader was made in amplify - however it has been heavily altered. 
+//If you open this in amplify it will kill the shader, don't do it.
 
 Shader "Xiexe/Toon/XSToon"
 {
@@ -42,6 +43,8 @@ Shader "Xiexe/Toon/XSToon"
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,2)) = 1
 		_Saturation("Saturation", Range(0.1,6)) = 1
+		_RimColor("Rimlight Tint", Color) = (1,1,1,1)
+		[Toggle]_SolidRimColor("Solid Rim Color", Float) = 0
 		
 	//Don't delete these or comment them out, they are needed. Not sure why as of now.
 		[HideInInspector] _texcoord2( "", 2D ) = "white" {}

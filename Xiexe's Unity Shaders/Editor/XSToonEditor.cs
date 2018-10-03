@@ -78,7 +78,6 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty tint;
     MaterialProperty mainTex;
     MaterialProperty normal;
-    MaterialProperty simLightDir;
     MaterialProperty specIntensity;
     MaterialProperty specArea;
     MaterialProperty rimWidth;
@@ -116,6 +115,8 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty normalTiling;
     MaterialProperty stylizedType;
     MaterialProperty rampColor;
+    MaterialProperty rimColor;
+   // MaterialProperty solidRimColor;
     public Texture ramp;
 
 
@@ -138,7 +139,6 @@ public class XSToonEditor : ShaderGUI
             tint = ShaderGUI.FindProperty("_Color", props);
             mainTex = ShaderGUI.FindProperty("_MainTex", props);
             normal = ShaderGUI.FindProperty("_Normal", props);
-            simLightDir = ShaderGUI.FindProperty("_SimulatedLightDirection", props);
             specIntensity = ShaderGUI.FindProperty("_SpecularIntensity", props);
             specArea = ShaderGUI.FindProperty("_SpecularArea", props);
             rimWidth = ShaderGUI.FindProperty("_RimWidth", props);
@@ -165,6 +165,8 @@ public class XSToonEditor : ShaderGUI
             matcapStyle = ShaderGUI.FindProperty("_MatcapStyle", props);
             stylizedType = ShaderGUI.FindProperty("_StylizedReflStyle", props);
             rampColor = ShaderGUI.FindProperty("_RampColor", props);
+            rimColor = ShaderGUI.FindProperty("_RimColor", props);
+  //          solidRimColor = ShaderGUI.FindProperty("_SolidRimColor", props);
 
             //advanced options
             colorMask = ShaderGUI.FindProperty("_colormask", props);
@@ -208,6 +210,8 @@ public class XSToonEditor : ShaderGUI
                     // material.DisableKeyword("_SMOOTHRIMLIGHT_ON");
                     materialEditor.ShaderProperty(rimWidth, Styles.rimWidthText, 2);
                     materialEditor.ShaderProperty(rimIntensity, Styles.rimIntText, 2);
+                    materialEditor.ShaderProperty(rimColor, "Rimlight Tint", 2);
+                  //  materialEditor.ShaderProperty(solidRimColor, "Use Solid Rim Color", 2);
                 }
 
 
@@ -216,6 +220,8 @@ public class XSToonEditor : ShaderGUI
                     // material.EnableKeyword("_SMOOTHRIMLIGHT_ON");
                     materialEditor.ShaderProperty(rimWidth, Styles.rimWidthText, 2);
                     materialEditor.ShaderProperty(rimIntensity, Styles.rimIntText, 2);
+                    materialEditor.ShaderProperty(rimColor, "Rimlight Tint", 2);
+                   // materialEditor.ShaderProperty(solidRimColor, "Use Solid Rim Color", 2);
                 }
 
                 if (rimStyle.floatValue == 2)

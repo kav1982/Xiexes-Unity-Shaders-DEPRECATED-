@@ -3,6 +3,7 @@ using UnityEngine.Networking;
 using UnityEditor;
 using System.Collections;
 using System.IO;
+using LitJson;
 
 public class XSUpdater : EditorWindow
 {
