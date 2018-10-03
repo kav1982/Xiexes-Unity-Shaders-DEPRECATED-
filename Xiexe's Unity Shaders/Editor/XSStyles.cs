@@ -6,7 +6,7 @@ using System.IO;
 [InitializeOnLoad]
 public class XSStyles : MonoBehaviour
 {
-    public static string ver = "1.4";
+    public static string ver = "1.4.1";
     public static string uiPath;
     private static GUISkin skin;
 
