@@ -80,8 +80,9 @@ Material:
     - _Saturation: 1
     - _ShadowType: 0
     - _SolidRimColor: 0
-    - _SpecularArea: 25
+    - _SpecularArea: 1
     - _SpecularIntensity: 5
+    - _SpecularStyle: 0
     - _Stencil: 0
     - _StencilComp: 0
     - _StencilFail: 0
@@ -97,6 +98,8 @@ Material:
     - _ZWrite: 1
     - __dirty: 1
     - _advMode: 0
+    - _anistropicAX: 0.75
+    - _anistropicAY: 0.75
     - _colormask: 15
     - _dstblend: 0
     - _mode: 0

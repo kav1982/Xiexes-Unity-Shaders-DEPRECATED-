@@ -293,7 +293,6 @@ public class XSToonEditor : ShaderGUI
                 materialEditor.TexturePropertySingleLine(Styles.specPatternText, specPattern);
                 materialEditor.ShaderProperty(stylizedType, "Specular Type");
                 materialEditor.ShaderProperty(specStyle, "Specular Style");
-                materialEditor.ShaderProperty(specArea, Styles.SmoothnessText, 3);
                 if (stylizedType.floatValue == 1)
                 {
                     material.EnableKeyword("_ANISTROPIC_ON");
@@ -303,6 +302,7 @@ public class XSToonEditor : ShaderGUI
                 else
                 {
                     material.DisableKeyword("_ANISTROPIC_ON");
+                    materialEditor.ShaderProperty(specArea, Styles.SmoothnessText, 3);
                 }
                 materialEditor.ShaderProperty(specIntensity, Styles.sintensityText, 3);
 

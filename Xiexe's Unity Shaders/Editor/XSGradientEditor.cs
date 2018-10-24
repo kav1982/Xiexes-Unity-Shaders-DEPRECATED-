@@ -70,7 +70,7 @@ public class XSGradientEditor : EditorWindow
         if (gradient != null)
         {
 
-            Texture2D tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+            Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
 
 
             for (int y = 0; y < tex.height; y++)

@@ -126,6 +126,14 @@
 			int r = y * 8 + x;
 			return dither[r] / 64;
 		}
+
+		// From HDRenderPipeline
+		float D_GGXAnisotropic(float TdotH, float BdotH, float NdotH, float roughnessT, float roughnessB)
+		{
+			float f = TdotH * TdotH / (roughnessT * roughnessT) + BdotH * BdotH / (roughnessB * roughnessB) + NdotH * NdotH;
+			return 1.0 / (roughnessT * roughnessB * f * f);
+		}
+
 	//-----
 
 		inline half4 LightingStandardCustomLighting( inout SurfaceOutputCustomLightingCustom s, half3 viewDir, UnityGI gi )
@@ -152,9 +160,11 @@
 				float2 uv_Specular = UVSet * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
 		//-----
 
-		//Set up Normals, viewDir
+		//Set up Normals, viewDir, tanget, binorm
 				float3 normalMap = UnpackNormal(tex2D( _Normal, uv_Normal));
 				float4 worldNormal = normalize(lerp(float4(WorldNormalVector(i, normalMap), 0), float4(WorldNormalVector(i, float3(0, 0, 1)), 0), 0.3));
+				float3 tangent = i.tangentDir;
+				half3 binorm = cross(worldNormal, tangent);
 				float3 stereoWorldViewDir = StereoWorldViewDir(i.worldPos);
 		//-----
 
@@ -193,7 +203,7 @@
 			
 		//Set up Dot Products
 				//ndl
-				float NdL = DotClamped(worldNormal , float4( light_Dir.xyz , 0.0 ) );
+				float NdL = DotClamped(worldNormal, float4(light_Dir.xyz, 0));
 				float roundedNdL = ceil(NdL); 
 				float finalNdL = lerp(roundedNdL, NdL, _ShadowType);
 				//vdn and stereo vdn
@@ -203,6 +213,10 @@
 				float NdH = DotClamped(worldNormal, halfVector);
 				//rdl
 				float RdV = saturate(dot(reflect(light_Dir, worldNormal), float4(-viewDir, 0)));
+				//tdh
+				float tdh = dot(tangent, halfVector);
+				//bdh
+				float bdh = dot(binorm, halfVector);
 		//-----
 
 		//Do Recieved Shadows and lighting
@@ -256,22 +270,17 @@
 				float3 specularHighlight = float3(0,0,0);
 					#ifdef _ANISTROPIC_ON
 						//Anistropic
-							float3 tangent = i.tangentDir;
-							half3 binorm = cross(worldNormal, tangent);
-							float aX = dot(halfVector, tangent) / _anistropicAX;
-							float aY = dot(halfVector, binorm) / _anistropicAY;
-							specularHighlight = sqrt(max(0.0, NdL / VdN)) * exp(-2.0 * (aX * aX + aY * aY) / (1.0 + NdH)) * (_SpecularArea) * 2.0;
-							float3 sharp = round(smoothstep(0.5-_SpecularArea*0.5, 0.5+_SpecularArea*0.5, specularHighlight));
-							float3 smooth = smoothstep(0.5-_SpecularArea*0.5, 0.5+_SpecularArea*0.5, specularHighlight);
+							float smooth = saturate(D_GGXAnisotropic(tdh, bdh, NdH, _anistropicAX, _anistropicAY));
+							float sharp = (round(smooth) * 2) / 2;
 							specularHighlight = lerp(smooth, sharp, _SpecularStyle);
 						#else
 						//Dot	
-							float reflectionUntouched = saturate(pow(RdV, _SpecularArea * 256));
+							float reflectionUntouched = saturate(pow(RdV, _SpecularArea * 128));
 							specularHighlight = lerp(reflectionUntouched, round(reflectionUntouched),  _SpecularStyle);
 						#endif
 
 				float specularRefl = specularMap.g * specularPatternTex * _SpecularIntensity * 2 * specularHighlight;
-			//-----
+			//--
 		//-----
 
 		//Do reflections
@@ -279,7 +288,7 @@
 				//making variables for later use for texture sampling. We want to create them empty here, so that we can save on texture samples by only
 				//sampling when we need to, we assign the texture samples as needed. I.E. We don't need the metallic map for the stylized reflections, so why sample it?
 				//Instead, throw it through as black. 
-				float4 reflection = float4(0,0,0,0);
+				float3 reflection = float4(0,0,0,0);
 				float4 metalMap = float4(0,0,0,0);
 				float4 roughMap = float4(0,0,0,0);
 
@@ -293,7 +302,8 @@
 					metalMap = (tex2D(_MetallicMap, uv_MainTex) * _Metallic);
 					roughMap = tex2D(_RoughMap, uv_MainTex);
 					float roughness = saturate((_ReflSmoothness * (roughMap.r)));
-					reflection = (UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectedDir, roughness * 6));
+					float4 envSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectedDir, roughness * 6);
+					reflection = DecodeHDR(envSample, unity_SpecCube0_HDR);
 					
 				// if a reflection probe doesn't exist, fill it with our fallback instead.	
 					if (any(reflection.xyz) == 0)
