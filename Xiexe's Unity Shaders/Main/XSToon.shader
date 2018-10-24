@@ -14,14 +14,15 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(On,0,Off,1)] _UseReflections ("Use Reflections", Int) = 1
 		[Enum(No,0,Yes,1)] _UseOnlyBakedCube ("UseBakedReflOnly", Int) = 0
 		[Enum(Sharp,0,Smooth,1)] _ShadowType ("Recieved Shadow Type", Int) = 0
-		[Enum(PBR,0,Stylized,1,Matcap,2,Matcap Cubemap,3)] _ReflType ("Reflection Type", Int) = 0
+		[Enum(PBR,0,Matcap,1,Cubemap,2)] _ReflType ("Reflection Type", Int) = 0
 		[Enum(Add,0,Multiply,1,Subtract,2)] _MatcapStyle ("Matcap Blend Mode", Int) = 1
 		[Enum(Dot,0,Anistropic,1)] _StylizedReflStyle ("StylizedReflStyle", Int) = 0
 		[Enum(Use World Color, 0, Use Ramp Color, 1)] _RampColor ("Ramp Color", Int) = 1
+		[Enum(Smooth,0,Sharp,1)]_SpecularStyle("Specular Style", Int) = 0
 		
 		[NoScaleOffset]_ShadowRamp("Shadow Ramp", 2D) = "white" {}
-		[NoScaleOffset]_SpecularMap("Specular Map", 2D) = "black" {}
-		[NoScaleOffset]_SpecularPattern("Specular Pattern", 2D) = "black" {}
+		[NoScaleOffset]_SpecularMap("Specular Map", 2D) = "white" {}
+		[NoScaleOffset]_SpecularPattern("Specular Pattern", 2D) = "white" {}
 		_MetallicMap("Metallic Map", 2D) = "white" {}
 		_RoughMap("Rough Map", 2D) = "white" {}
 		_BakedCube("Local Cubemap", Cube) = "black" {}
@@ -31,8 +32,8 @@ Shader "Xiexe/Toon/XSToon"
 		[Normal]_Normal("Normal", 2D) = "bump" {}
 		_NormalTiling("NormalTiling", Vector) = (1,1,0,0)
 		_SimulatedLightDirection("Simulated Light Direction", Vector) = (0,45,90,0)
-		_SpecularIntensity("Specular Intensity", Float) = 5
-		_SpecularArea("Specular Area", Range( 0 , 50)) = 25
+		_SpecularIntensity("Specular Intensity", Float) = 0
+		_SpecularArea("Specular Area", Range( 0 , 1)) = 0.5
 		_RimWidth("Rim Width", Range( 0 , 1)) = 0.2
 		_RimIntensity("Rim Intensity", Range(0, 10)) = 0.8
 		[Toggle] _Emissive("Emissive?", Float) = 0.0
@@ -41,10 +42,16 @@ Shader "Xiexe/Toon/XSToon"
 		[HideInInspector]_Cutoff ("Cutout Amount", Float) = 0.5
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
-		_StylelizedIntensity("Stylized Refl Intensity", Range(0,2)) = 1
+		_StylelizedIntensity("Stylized Refl Intensity", Range(0,10)) = 1
 		_Saturation("Saturation", Range(0.1,6)) = 1
 		_RimColor("Rimlight Tint", Color) = (1,1,1,1)
 		[Toggle]_SolidRimColor("Solid Rim Color", Float) = 0
+
+		_anistropicAX("aY", range(0,1)) = 0.75
+		_anistropicAY("aX", range(0,1)) = 0.75
+
+
+
 		
 	//Don't delete these or comment them out, they are needed. Not sure why as of now.
 		[HideInInspector] _texcoord2( "", 2D ) = "white" {}
@@ -127,8 +134,7 @@ Shader "Xiexe/Toon/XSToon"
 		CGPROGRAM
 		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
 		#pragma shader_feature _ _REFLECTIONS_ON
-		#pragma shader_feature _ _PBRREFL_ON 
-		#pragma shader_feature _ _STYLIZEDREFLECTION_ON
+		#pragma shader_feature _ _PBRREFL_ON
 		#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _MATCAP_ON
 		#pragma shader_feature _ _MATCAP_CUBEMAP_ON
