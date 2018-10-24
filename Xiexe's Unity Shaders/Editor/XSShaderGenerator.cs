@@ -56,7 +56,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentDitheredFallback = "	Fallback \"Transparent/Cutout/Diffuse\"";
 
     //Strings for Pragma
-    private static string cutoutPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows addshadow nometa";
+    private static string cutoutPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
     private static string transparentPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
     private static string transparentShadowedPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
     private static string transparentFadePragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
