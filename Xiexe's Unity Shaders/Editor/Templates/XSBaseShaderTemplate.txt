@@ -15,6 +15,7 @@ Shader !name
 		[Enum(Add,0,Multiply,1,Subtract,2)] _MatcapStyle ("Matcap Blend Mode", Int) = 1
 		[Enum(Dot,0,Anistropic,1)] _StylizedReflStyle ("StylizedReflStyle", Int) = 0
 		[Enum(Use World Color, 0, Use Ramp Color, 1)] _RampColor ("Ramp Color", Int) = 1
+		[Enum(Smooth,0,Sharp,1)]_SpecularStyle("Specular Style", Int) = 0
 
 		[NoScaleOffset]_ShadowRamp("Shadow Ramp", 2D) = "white" {}
 		[NoScaleOffset]_SpecularMap("Specular Map", 2D) = "white" {}
@@ -124,7 +125,6 @@ Shader !name
 
 		#pragma shader_feature _ _REFLECTIONS_ON
 		#pragma shader_feature _ _PBRREFL_ON
-		#pragma shader_feature _ _STYLIZEDREFLECTION_ON
 		#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _MATCAP_ON
 		#pragma shader_feature _ _MATCAP_CUBEMAP_ON
