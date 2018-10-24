@@ -270,7 +270,7 @@
 				float3 specularHighlight = float3(0,0,0);
 					#ifdef _ANISTROPIC_ON
 						//Anistropic
-							float smooth = saturate(D_GGXAnisotropic(tdh, bdh, NdH, _anistropicAX, _anistropicAY));
+							float smooth = saturate(D_GGXAnisotropic(tdh, bdh, NdH, _anistropicAX * 0.1, _anistropicAY * 0.1));
 							float sharp = (round(smooth) * 2) / 2;
 							specularHighlight = lerp(smooth, sharp, _SpecularStyle);
 						#else
