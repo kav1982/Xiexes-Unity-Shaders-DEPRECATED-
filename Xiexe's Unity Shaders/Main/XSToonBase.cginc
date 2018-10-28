@@ -43,15 +43,19 @@
 		sampler2D _EmissiveTex;
 		sampler2D _ShadowRamp;
 		sampler2D _Normal;
+		sampler2D _DetailNormal;
+		sampler2D _DetailMask;
 		sampler2D _SpecularMap;
 		sampler2D _SpecularPattern;
 		sampler2D _MetallicMap;
 		sampler2D _RoughMap;
+		sampler2D _OcclusionMap;
 		samplerCUBE _BakedCube;
 		float4 _MainTex_ST;
 		float4 _EmissiveTex_ST;
 		float4 _ShadowRamp_ST;
 		float4 _Normal_ST;
+		float4 _DetailNormal_ST;
 		float4 _SpecularMap_ST;
 		float4 _SpecularPattern_ST;
 		float4 _MetallicMap_ST;
@@ -90,6 +94,9 @@
 		float _anistropicAX;
 		float _anistropicAY;
 		float _SpecularStyle;
+		float _NormalStrength;
+		float _DetailNormalStrength;
+		float _OcclusionStrength;
 
 	//Custom Helper Functions		
 		float4x4 tMatrixFunc(float3 x, float3 y, float3 z)
@@ -104,7 +111,7 @@
 		float3 StereoWorldViewDir( float3 worldPos )
 		{
 			#if UNITY_SINGLE_PASS_STEREO
-			float3 cameraPos = float3((unity_StereoWorldSpaceCameraPos[1]+ unity_StereoWorldSpaceCameraPos[1])*.5); 
+			float3 cameraPos = float3((unity_StereoWorldSpaceCameraPos[0]+ unity_StereoWorldSpaceCameraPos[1])*.5); 
 			#else
 			float3 cameraPos = _WorldSpaceCameraPos;
 			#endif
@@ -146,7 +153,7 @@
 					float steppedAtten = round(data.atten);
 					float ase_lightAtten = lerp(steppedAtten, data.atten, _ShadowType);
 				#else
-					float3 ase_lightAttenRGB = smoothstep(0, 0.4, (gi.light.color / ( ( _LightColor0.rgb ) + 0.000001 )));
+					float3 ase_lightAttenRGB = smoothstep(0, 1, (gi.light.color / ( ( _LightColor0.rgb ) + 0.000001 )));
 					float ase_lightAtten = (max( max( ase_lightAttenRGB.r, ase_lightAttenRGB.g ), ase_lightAttenRGB.b ));
 				#endif
 		//-----
@@ -157,12 +164,20 @@
 				float2 UVSet = lerp(texcoord1,texcoord2,_UseUV2forNormalsSpecular);
 				float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
 				float2 uv_Normal = UVSet * _Normal_ST.xy + _Normal_ST.zw;
+				float2 uv_DetailNormal = UVSet * _DetailNormal_ST.xy + _DetailNormal_ST.zw;
 				float2 uv_Specular = UVSet * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
 				float3 normalMap = UnpackNormal(tex2D( _Normal, uv_Normal));
-				float4 worldNormal = normalize(lerp(float4(WorldNormalVector(i, normalMap), 0), float4(WorldNormalVector(i, float3(0, 0, 1)), 0), 0.3));
+					normalMap.xy *= _NormalStrength;
+				float3 detailMask = tex2D(_DetailMask, i.uv_texcoord);
+				float3 detailNormal = UnpackNormal(tex2D(_DetailNormal, uv_DetailNormal));
+					detailNormal.xy *= _DetailNormalStrength * detailMask.r;
+			//Partial Derivative blending
+				float3 normal = normalize(float3(normalMap.xy*detailNormal.z + detailNormal.xy*normalMap.z, normalMap.z*detailNormal.z));
+				
+				float4 worldNormal = normalize(lerp(float4(WorldNormalVector(i, normal), 0), float4(WorldNormalVector(i, float3(0, 0, 1)), 0), 0.3));
 				float3 tangent = i.tangentDir;
 				half3 binorm = cross(worldNormal, tangent);
 				float3 stereoWorldViewDir = StereoWorldViewDir(i.worldPos);
@@ -180,10 +195,10 @@
 				half3 reverseindirectDiffuseLight = ShadeSH9(float4(-worldNormal.xyz,1));
 				half3 noAmbientindirectDiffuseLight = (indirectDiffuseLight - reverseindirectDiffuseLight)/2;
 				float3 indirectLightSH = noAmbientindirectDiffuseLight * 0.5 + 0.533;
-				float averagedindirect = length(indirectLightSH)/sqrt(3.0);
+				float averagedindirect = length(indirectLightSH)/sqrt(3.0) ;
 
 				//Worldspace light direction and simulated light directions
-				float3 worldLightDir = normalize( UnityWorldSpaceLightDir( i.worldPos ) );
+				float3 worldLightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
 				float4 simulatedLight = normalize(indirectLightSH.xyzz);//normalize( _SimulatedLightDirection );
 
 				//figure out whether we are in a realtime lighting scnario, or baked, and return it as a 0, or 1 (1 for realtime, 0 for baked)
@@ -221,8 +236,9 @@
 
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
-				float remappedRamp = NdL * 0.5 + 0.5;
-				float remappedRampBaked = averagedindirect;
+				float3 occlusionMap = tex2Dlod(_OcclusionMap, float4(i.uv_texcoord,0,_OcclusionStrength));// * _OcclusionStrength;
+				float remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.r;
+				float remappedRampBaked = averagedindirect * occlusionMap.r;
 
 				//rimlight typing
 				float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
@@ -376,7 +392,7 @@
 		//-----
 		
 		//Do Alpha Modes
-			//D
+			//opaque
 				#ifdef opaque
 					c.a = 1;
 				#endif

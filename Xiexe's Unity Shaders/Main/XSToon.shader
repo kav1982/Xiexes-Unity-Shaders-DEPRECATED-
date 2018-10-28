@@ -20,39 +20,44 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(Use World Color, 0, Use Ramp Color, 1)] _RampColor ("Ramp Color", Int) = 1
 		[Enum(Smooth,0,Sharp,1)]_SpecularStyle("Specular Style", Int) = 0
 		
-		[NoScaleOffset]_ShadowRamp("Shadow Ramp", 2D) = "white" {}
-		[NoScaleOffset]_SpecularMap("Specular Map", 2D) = "white" {}
-		[NoScaleOffset]_SpecularPattern("Specular Pattern", 2D) = "white" {}
+	//Textures
+		_MainTex("Main Tex", 2D) = "white" {}
+		[Normal]_Normal("Normal", 2D) = "bump" {}
+		[Normal]_DetailNormal("Detail Normal", 2D) = "bump" {}
+		_DetailMask("Detail Mask", 2D) = "white" {}
+		_ShadowRamp("Shadow Ramp", 2D) = "white" {}
+		_SpecularMap("Specular Map", 2D) = "white" {}
+		_SpecularPattern("Specular Pattern", 2D) = "white" {}
 		_MetallicMap("Metallic Map", 2D) = "white" {}
 		_RoughMap("Rough Map", 2D) = "white" {}
 		_BakedCube("Local Cubemap", Cube) = "black" {}
+		_EmissiveTex("Emissive Tex", 2D) = "white" {}
+		_OcclusionMap("AO Map", 2D) = "white" {}
+
+		_OcclusionStrength("Occlusion Strength", Range(0,15)) = 1
+		_NormalStrength("Normal Strength", float) = 1
+		_DetailNormalStrength("Detail Normal Strength", float) = 1
+
 		_SpecularPatternTiling("Specular Pattern Tiling", Vector) = (20,20,0,0)
 		_Color("Color Tint", Color) = (1,1,1,1)
-		_MainTex("Main Tex", 2D) = "white" {}
-		[Normal]_Normal("Normal", 2D) = "bump" {}
+		_SubsurfaceColor("Subsurface Color", Color) = (0,0,0,0)
 		_NormalTiling("NormalTiling", Vector) = (1,1,0,0)
-		_SimulatedLightDirection("Simulated Light Direction", Vector) = (0,45,90,0)
 		_SpecularIntensity("Specular Intensity", Float) = 0
 		_SpecularArea("Specular Area", Range( 0 , 1)) = 0.5
 		_RimWidth("Rim Width", Range( 0 , 1)) = 0.2
 		_RimIntensity("Rim Intensity", Range(0, 10)) = 0.8
 		[Toggle] _Emissive("Emissive?", Float) = 0.0
-		_EmissiveTex("Emissive Tex", 2D) = "white" {}
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0) 
-		[HideInInspector]_Cutoff ("Cutout Amount", Float) = 0.5
+		_Cutoff ("Cutout Amount", Float) = 0.5
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,10)) = 1
 		_Saturation("Saturation", Range(0.1,6)) = 1
 		_RimColor("Rimlight Tint", Color) = (1,1,1,1)
 		[Toggle]_SolidRimColor("Solid Rim Color", Float) = 0
-
 		_anistropicAX("aY", range(0,1)) = 0.75
 		_anistropicAY("aX", range(0,1)) = 0.75
 
-
-
-		
 	//Don't delete these or comment them out, they are needed. Not sure why as of now.
 		[HideInInspector] _texcoord2( "", 2D ) = "white" {}
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
@@ -77,8 +82,6 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(Off,0,On,1)] _ZWrite("ZWrite", Int) = 1
 		[Enum(UnityEngine.Rendering.CompareFunction)] _ZTest ("ZTest", Int) = 4
 		[Enum(None,0,Alpha,1,Red,8,Green,4,Blue,2,RGB,14,RGBA,15)] _colormask("Color Mask", Int) = 15 
-
-
 	}
 
 	SubShader

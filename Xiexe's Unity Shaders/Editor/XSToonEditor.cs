@@ -18,6 +18,12 @@ public class XSToonEditor : ShaderGUI
         Advanced
     }
 
+    public enum UseSpecular
+    {
+        On,
+        Off
+    }
+
     // Styles for most options on the texture - shows name and mouseover description
     //public static GUIContent nameText = new GUIContent("name", "desc");
     private static class Styles
@@ -50,6 +56,9 @@ public class XSToonEditor : ShaderGUI
         public static GUIContent normalTiling = new GUIContent("Tiling", "Normal map tiling, adjust the X and Y to make the normals larger or smaller.");
         public static GUIContent MatcapCubemap = new GUIContent("Cubemap", "A Cubemap. This can be made by selecting the texture and changing the type to 'cubemap' in the inspector. You may also want to change 'Convolution' to be 'Glossy Reflection' as well");
         public static GUIContent MatcapMask = new GUIContent("Mask", "The mask for the matcap. Black for off, white for on.");
+        public static GUIContent detailNormal = new GUIContent("Detail Normal", "Detail Normals. These get blended on top of your regular normal for upclose detailing.");
+        public static GUIContent detailMask = new GUIContent("Detail Mask", "Detail normal mask. Black to white, white = area with setail normals, black = area without.");
+        public static GUIContent occlusionMap = new GUIContent("Occlusion Map", "Occlusion map. Used to bake shadowing into areas by removing Ambient Color. Black to White texture.");
     }
 
     void DoFooter()
@@ -74,7 +83,6 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty shadowRamp;
     MaterialProperty specMap;
     MaterialProperty specPattern;
-    MaterialProperty specTiling;
     MaterialProperty tint;
     MaterialProperty mainTex;
     MaterialProperty normal;
@@ -91,8 +99,6 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty rimStyle;
     MaterialProperty uv2;
     MaterialEditor m_MaterialEditor;
-
-    //advanced
     MaterialProperty colorMask;
     MaterialProperty stencil;
     MaterialProperty stencilComp;
@@ -110,24 +116,29 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty shadowType;
     MaterialProperty reflType;
     MaterialProperty saturation;
-    MaterialProperty styleIntensity;
     MaterialProperty matcapStyle;
-    MaterialProperty normalTiling;
     MaterialProperty stylizedType;
     MaterialProperty rampColor;
     MaterialProperty rimColor;
     MaterialProperty aX;
     MaterialProperty aY;
     MaterialProperty specStyle;
-   // MaterialProperty solidRimColor;
-    public Texture ramp;
+    MaterialProperty detailNormal;
+    MaterialProperty detailMask;
+    MaterialProperty normalStrength;
+	MaterialProperty detailNormalStrength;
+    MaterialProperty occlusionMap;
+    MaterialProperty occlusionStrength;
 
+    public Texture ramp;
 
     //help buttons for editor
     public static GUISkin _xsSkin;
     public static string uiPath;
     bool showHelp = false;
 
+    public UseSpecular useSpec;
+    private float oldSpec;
 
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
     {
@@ -138,7 +149,6 @@ public class XSToonEditor : ShaderGUI
             shadowRamp = ShaderGUI.FindProperty("_ShadowRamp", props);
             specMap = ShaderGUI.FindProperty("_SpecularMap", props);
             specPattern = ShaderGUI.FindProperty("_SpecularPattern", props);
-            specTiling = ShaderGUI.FindProperty("_SpecularPatternTiling", props);
             tint = ShaderGUI.FindProperty("_Color", props);
             mainTex = ShaderGUI.FindProperty("_MainTex", props);
             normal = ShaderGUI.FindProperty("_Normal", props);
@@ -162,8 +172,6 @@ public class XSToonEditor : ShaderGUI
             shadowType = ShaderGUI.FindProperty("_ShadowType", props);
             reflType = ShaderGUI.FindProperty("_ReflType", props);
             saturation = ShaderGUI.FindProperty("_Saturation", props);
-            styleIntensity = ShaderGUI.FindProperty("_StylelizedIntensity", props);
-            normalTiling = ShaderGUI.FindProperty("_NormalTiling", props);
             useRefl = ShaderGUI.FindProperty("_UseReflections", props);
             matcapStyle = ShaderGUI.FindProperty("_MatcapStyle", props);
             stylizedType = ShaderGUI.FindProperty("_StylizedReflStyle", props);
@@ -172,7 +180,12 @@ public class XSToonEditor : ShaderGUI
             aX = ShaderGUI.FindProperty("_anistropicAX", props);
             aY = ShaderGUI.FindProperty("_anistropicAY", props);
             specStyle = ShaderGUI.FindProperty("_SpecularStyle", props);
-  //          solidRimColor = ShaderGUI.FindProperty("_SolidRimColor", props);
+            detailNormal = ShaderGUI.FindProperty("_DetailNormal", props);
+            detailMask = ShaderGUI.FindProperty("_DetailMask", props);
+            normalStrength = ShaderGUI.FindProperty("_NormalStrength", props);
+            detailNormalStrength = ShaderGUI.FindProperty("_DetailNormalStrength", props);
+            occlusionMap = ShaderGUI.FindProperty("_OcclusionMap", props);
+            occlusionStrength = ShaderGUI.FindProperty("_OcclusionStrength", props);
 
             //advanced options
             colorMask = ShaderGUI.FindProperty("_colormask", props);
@@ -207,166 +220,184 @@ public class XSToonEditor : ShaderGUI
                 }
 
                 materialEditor.ShaderProperty(culling, culling.displayName);
+                
+                //rimlight
+                    materialEditor.ShaderProperty(rimStyle, Styles.rimLightTypeText);
 
-                materialEditor.ShaderProperty(rimStyle, Styles.rimLightTypeText);
+                    if (rimStyle.floatValue == 0)
+                    {
+                        materialEditor.ShaderProperty(rimWidth, Styles.rimWidthText, 2);
+                        materialEditor.ShaderProperty(rimIntensity, Styles.rimIntText, 2);
+                        materialEditor.ShaderProperty(rimColor, "Rimlight Tint", 2);
+                    }
 
+                    if (rimStyle.floatValue == 1)
+                    {
+                        materialEditor.ShaderProperty(rimWidth, Styles.rimWidthText, 2);
+                        materialEditor.ShaderProperty(rimIntensity, Styles.rimIntText, 2);
+                        materialEditor.ShaderProperty(rimColor, "Rimlight Tint", 2);
+                    }
 
-                if (rimStyle.floatValue == 0)
-                {
-                    // material.DisableKeyword("_SMOOTHRIMLIGHT_ON");
-                    materialEditor.ShaderProperty(rimWidth, Styles.rimWidthText, 2);
-                    materialEditor.ShaderProperty(rimIntensity, Styles.rimIntText, 2);
-                    materialEditor.ShaderProperty(rimColor, "Rimlight Tint", 2);
-                  //  materialEditor.ShaderProperty(solidRimColor, "Use Solid Rim Color", 2);
-                }
-
-
-                if (rimStyle.floatValue == 1)
-                {
-                    // material.EnableKeyword("_SMOOTHRIMLIGHT_ON");
-                    materialEditor.ShaderProperty(rimWidth, Styles.rimWidthText, 2);
-                    materialEditor.ShaderProperty(rimIntensity, Styles.rimIntText, 2);
-                    materialEditor.ShaderProperty(rimColor, "Rimlight Tint", 2);
-                   // materialEditor.ShaderProperty(solidRimColor, "Use Solid Rim Color", 2);
-                }
-
-                if (rimStyle.floatValue == 2)
+                    if (rimStyle.floatValue == 2)
                 {
                     material.SetFloat("_RimIntensity", 0);
                 }
+                //-----
 
                 //main
-                //Rect rect = (0,0);
-                XSStyles.Separator();
-                EditorGUILayout.BeginHorizontal();
-                materialEditor.TexturePropertySingleLine(Styles.MainTexText, mainTex, tint);
-                XSStyles.helpPopup(showHelp, "Main Texture", "The Main Texture - provides color, and Alpha in the case of Transparent Fade.", "Okay");
-                // GUILayout.Button(new GUIContent("", help_button_tex));
-                EditorGUILayout.EndHorizontal();
-                GUI.skin = null;
-                materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
+                    //Rect rect = (0,0);
+                    XSStyles.Separator();
+                    EditorGUILayout.BeginHorizontal();
+                        materialEditor.TexturePropertySingleLine(Styles.MainTexText, mainTex, tint);
+                        XSStyles.helpPopup(showHelp, "Main Texture", "The Main Texture - provides color, and Alpha in the case of Transparent Fade.", "Okay");
+                    EditorGUILayout.EndHorizontal();
+                    GUI.skin = null;
+                        materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
+
+                        materialEditor.TexturePropertySingleLine(Styles.occlusionMap, occlusionMap); 
+                        
+                        if ( material.GetTexture("_OcclusionMap") )
+                        {
+                           materialEditor.ShaderProperty(occlusionStrength, "Strength", 3);
+                        }
+                        else
+                        {
+                            material.SetFloat("_OcclusionStrength", 0);
+                        }
                 //cutoff
-                if (material.shader == Shader.Find("Xiexe/Toon/XSToonCutout"))
-                {
-                    materialEditor.ShaderProperty(alphaCutoff, Styles.cutoutText);
-                }
+                    if (material.shader == Shader.Find("Xiexe/Toon/XSToonCutout"))
+                    {
+                        materialEditor.ShaderProperty(alphaCutoff, Styles.cutoutText);
+                    }
+                //-----
 
                 //normal map
-                XSStyles.Separator();
-                EditorGUILayout.BeginHorizontal();
-                materialEditor.TexturePropertySingleLine(Styles.normalText, normal);
-                XSStyles.helpPopup(showHelp, "Normal Map", "The normal map - controls how light and shadow distorts on the surface of an object. \n\n Usually used for small micro details, such as scratches on a metal surface.", "Okay");
-                EditorGUILayout.EndHorizontal();
-               // materialEditor.ShaderProperty(normalTiling, Styles.normalTiling, 3);
-                materialEditor.TextureScaleOffsetProperty(normal);
+                    XSStyles.Separator();
+                        EditorGUILayout.BeginHorizontal();
+                        materialEditor.TexturePropertySingleLine(Styles.normalText, normal, normalStrength);
+                    XSStyles.helpPopup(showHelp, "Normal Map", "The normal map - controls how light and shadow distorts on the surface of an object. \n\n Usually used for small micro details, such as scratches on a metal surface.", "Okay");
+                    EditorGUILayout.EndHorizontal();
+                        materialEditor.TextureScaleOffsetProperty(normal);
+                        materialEditor.TexturePropertySingleLine(Styles.detailNormal, detailNormal, detailNormalStrength);
+                        materialEditor.TextureScaleOffsetProperty(detailNormal);
+                        materialEditor.TexturePropertySingleLine(Styles.detailMask, detailMask);
+                //-----
 
                 //shadow ramp
-                XSStyles.Separator();
-                EditorGUILayout.BeginHorizontal();
-                materialEditor.TexturePropertySingleLine(Styles.rampText, shadowRamp);
-                XSStyles.helpPopup(showHelp, "Shadow Ramp", "A gradient texture - horizontal or vertical. Used to control how shadows look. I.E. A smooth gradient would result in smooth shadows. \n\n If your ramp is colored, you can switch to \"Use Ramp Color\" to make your shadows inherit the color of the ramp, otherwise, your shadows will be colored based on the environment. \n\n The Shadow Style ONLY effects shadows cast onto you by other objects.", "Okay");
-                EditorGUILayout.EndHorizontal();
-                materialEditor.ShaderProperty(shadowType, Styles.shadowTypeText, 2);
-                materialEditor.ShaderProperty(rampColor, "Use Ramp Color", 2);
-                if (rampColor.floatValue == 0)
-                {
-                    material.EnableKeyword("_WORLDSHADOWCOLOR_ON");
+                    XSStyles.Separator();
+                    EditorGUILayout.BeginHorizontal();
+                        materialEditor.TexturePropertySingleLine(Styles.rampText, shadowRamp);
+                        XSStyles.helpPopup(showHelp, "Shadow Ramp", "A gradient texture - horizontal or vertical. Used to control how shadows look. I.E. A smooth gradient would result in smooth shadows. \n\n If your ramp is colored, you can switch to \"Use Ramp Color\" to make your shadows inherit the color of the ramp, otherwise, your shadows will be colored based on the environment. \n\n The Shadow Style ONLY effects shadows cast onto you by other objects.", "Okay");
+                    EditorGUILayout.EndHorizontal();
+                        materialEditor.ShaderProperty(shadowType, Styles.shadowTypeText, 2);
+                        materialEditor.ShaderProperty(rampColor, "Use Ramp Color", 2);
+                        if (rampColor.floatValue == 0)
+                        {
+                            material.EnableKeyword("_WORLDSHADOWCOLOR_ON");
 
-                }
-                if (rampColor.floatValue == 1)
-                {
-                    material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
-                }
-                XSStyles.callGradientEditor();
+                        }
+                        if (rampColor.floatValue == 1)
+                        {
+                            material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
+                        }
+                    XSStyles.callGradientEditor();
                 //-----  
 
                 //specular
-                XSStyles.Separator();
-                
-                EditorGUILayout.BeginHorizontal();
-                materialEditor.TexturePropertySingleLine(Styles.specMapText, specMap);
-                XSStyles.helpPopup(showHelp, "Specularity", "Specular reflections are the result of light bouncing off of an object. \n\nThis effect is generally used to show gloss on things such as a shiny plastic material. \n\nYou can mask out where reflections can happen with the Specular Map, and you can make the reflections reflect in a pattern with the Specular Pattern. The default texture, for instance, would reflect light in the pattern of lines.", "Okay");
-                EditorGUILayout.EndHorizontal();
-
-                GUI.skin = null;
-                materialEditor.TextureScaleOffsetProperty(specMap);
-                materialEditor.TexturePropertySingleLine(Styles.specPatternText, specPattern);
-                materialEditor.ShaderProperty(stylizedType, "Specular Type");
-                materialEditor.ShaderProperty(specStyle, "Specular Style");
-                if (stylizedType.floatValue == 1)
-                {
-                    material.EnableKeyword("_ANISTROPIC_ON");
-                    materialEditor.ShaderProperty(aX, "Length", 3);
-                    materialEditor.ShaderProperty(aY, "Width", 3);
-                }
-                else
-                {
-                    material.DisableKeyword("_ANISTROPIC_ON");
-                    materialEditor.ShaderProperty(specArea, Styles.SmoothnessText, 3);
-                }
-                materialEditor.ShaderProperty(specIntensity, Styles.sintensityText, 3);
-
+                    XSStyles.Separator();
+                    EditorGUILayout.BeginHorizontal();
+                        useSpec = (UseSpecular)EditorGUILayout.EnumPopup("Use Specular", useSpec);
+                        XSStyles.helpPopup(showHelp, "Specularity", "Specular reflections are the result of light bouncing off of an object. \n\nThis effect is generally used to show gloss on things such as a shiny plastic material. \n\nYou can mask out where reflections can happen with the Specular Map, and you can make the reflections reflect in a pattern with the Specular Pattern. The default texture, for instance, would reflect light in the pattern of lines.", "Okay");
+                    EditorGUILayout.EndHorizontal();
+                        EditorGUI.BeginChangeCheck();
+                        if (useSpec == UseSpecular.On)
+                        {    
+                                materialEditor.TexturePropertySingleLine(Styles.specMapText, specMap);
+                            GUI.skin = null;
+                                materialEditor.TextureScaleOffsetProperty(specMap);
+                                materialEditor.TexturePropertySingleLine(Styles.specPatternText, specPattern);
+                                materialEditor.ShaderProperty(stylizedType, "Specular Type");
+                                materialEditor.ShaderProperty(specStyle, "Specular Style");
+                            if (stylizedType.floatValue == 1)
+                            {
+                                material.EnableKeyword("_ANISTROPIC_ON");
+                                materialEditor.ShaderProperty(aX, "Length", 3);
+                                materialEditor.ShaderProperty(aY, "Width", 3);
+                            }
+                            else
+                            {
+                                material.DisableKeyword("_ANISTROPIC_ON");
+                                materialEditor.ShaderProperty(specArea, Styles.SmoothnessText, 3);
+                            }
+                            materialEditor.ShaderProperty(specIntensity, Styles.sintensityText, 3);
+                        }
+                        if(useSpec == UseSpecular.Off)
+                        {
+                            material.SetFloat("_SpecularIntensity", 0);
+                        }
+                //-----
 
                 //metallic
-                XSStyles.Separator();
-                EditorGUILayout.BeginHorizontal();
-                materialEditor.ShaderProperty(useRefl, "Use Reflections");
-                XSStyles.helpPopup(showHelp, "Reflections", "This panel is all about reflections. XSToon supports many styles of reflections. \n\n-PBR \n This is what you think about when you think reflections - these will sample the reflection probes in a room and reflect them back off of the surface. \n\n-Matcap \n This takes a SphereMap texture and maps it based on your viewing direction to the surface, to simulate reflections. \n\n -Matcap Cubemap \n This is actually just a cubemap reflection, but you can plug any cubemap in and have it reflect, as if you were in that environment. \n\n -Stylized \n Stylized has two options, Dot, and Anistropic. Dot will reflect light in a sharp dot, similar to what you'd see in anime. Anistropic will reflect light in a horizontal line across the object, good for hair.", "Okay");
-                EditorGUILayout.EndHorizontal();
-                GUI.skin = null;
-                if (useRefl.floatValue == 0)
-                {
-                    materialEditor.ShaderProperty(reflType, "Reflection Style");
-                    material.EnableKeyword("_REFLECTIONS_ON");
-                    //pbr
-                    if (reflType.floatValue == 0)
-                    {
-                        materialEditor.TexturePropertySingleLine(Styles.bakedCube, bakedCube);
-                        material.DisableKeyword("_MATCAP_ON");
-                        material.EnableKeyword("_PBRREFL_ON");
-                        materialEditor.TexturePropertySingleLine(Styles.MetalMap, metalMap);
-                        materialEditor.ShaderProperty(metal, "Metallic", 2);
-                        materialEditor.TexturePropertySingleLine(Styles.roughMap, roughMap);
-                        materialEditor.ShaderProperty(reflSmooth, "Roughness", 2);
-                    }
-                    //matcap
-                    if (reflType.floatValue == 1)
-                    {
-                        material.EnableKeyword("_MATCAP_ON");
-                        material.DisableKeyword("_MATCAP_CUBEMAP_ON");
-                        material.DisableKeyword("_PBRREFL_ON");
-                        materialEditor.ShaderProperty(matcapStyle, "Blend Mode");
-                        materialEditor.TexturePropertySingleLine(Styles.Matcap, metalMap);
-                        materialEditor.TexturePropertySingleLine(Styles.MatcapMask, roughMap);
-                        materialEditor.ShaderProperty(metal, "Intensity", 2);
-                        materialEditor.ShaderProperty(reflSmooth, "Blur", 2);
-                    }
-                    //bakedcubemap
-                    if (reflType.floatValue == 2)
-                    {
-                        material.EnableKeyword("_MATCAP_CUBEMAP_ON");
-                        material.EnableKeyword("_MATCAP_ON");
-                        material.DisableKeyword("_PBRREFL_ON");
-                        materialEditor.ShaderProperty(matcapStyle, "Blend Mode");
-                        materialEditor.TexturePropertySingleLine(Styles.MatcapCubemap, bakedCube);
-                        materialEditor.TexturePropertySingleLine(Styles.MatcapMask, roughMap);
-                        materialEditor.ShaderProperty(metal, "Intensity", 2);
-                        materialEditor.ShaderProperty(reflSmooth, "Roughness", 2);
-                    }
-                }
-                else
-                {
-                    material.DisableKeyword("_REFLECTIONS_ON");
-                    material.DisableKeyword("_PBRREFL_ON");
-                    material.DisableKeyword("_MATCAP_ON");
-                    material.DisableKeyword("_MATCAP_CUBEMAP_ON");
-                }
+                    XSStyles.Separator();
+                        EditorGUILayout.BeginHorizontal();
+                        materialEditor.ShaderProperty(useRefl, "Use Reflections");
+                        XSStyles.helpPopup(showHelp, "Reflections", "This panel is all about reflections. XSToon supports many styles of reflections. \n\n-PBR \n This is what you think about when you think reflections - these will sample the reflection probes in a room and reflect them back off of the surface. \n\n-Matcap \n This takes a SphereMap texture and maps it based on your viewing direction to the surface, to simulate reflections. \n\n -Matcap Cubemap \n This is actually just a cubemap reflection, but you can plug any cubemap in and have it reflect, as if you were in that environment. \n\n -Stylized \n Stylized has two options, Dot, and Anistropic. Dot will reflect light in a sharp dot, similar to what you'd see in anime. Anistropic will reflect light in a horizontal line across the object, good for hair.", "Okay");
+                    EditorGUILayout.EndHorizontal();
+                    GUI.skin = null;
+                        if (useRefl.floatValue == 0)
+                        {
+                            materialEditor.ShaderProperty(reflType, "Reflection Style");
+                            material.EnableKeyword("_REFLECTIONS_ON");
+                            //pbr
+                            if (reflType.floatValue == 0)
+                            {
+                                materialEditor.TexturePropertySingleLine(Styles.bakedCube, bakedCube);
+                                material.DisableKeyword("_MATCAP_ON");
+                                material.EnableKeyword("_PBRREFL_ON");
+                                materialEditor.TexturePropertySingleLine(Styles.MetalMap, metalMap);
+                                materialEditor.ShaderProperty(metal, "Metallic", 2);
+                                materialEditor.TexturePropertySingleLine(Styles.roughMap, roughMap);
+                                materialEditor.ShaderProperty(reflSmooth, "Roughness", 2);
+                            }
+                            //matcap
+                            if (reflType.floatValue == 1)
+                            {
+                                material.EnableKeyword("_MATCAP_ON");
+                                material.DisableKeyword("_MATCAP_CUBEMAP_ON");
+                                material.DisableKeyword("_PBRREFL_ON");
+                                materialEditor.ShaderProperty(matcapStyle, "Blend Mode");
+                                materialEditor.TexturePropertySingleLine(Styles.Matcap, metalMap);
+                                materialEditor.TexturePropertySingleLine(Styles.MatcapMask, roughMap);
+                                materialEditor.ShaderProperty(metal, "Intensity", 2);
+                                materialEditor.ShaderProperty(reflSmooth, "Blur", 2);
+                            }
+                            //bakedcubemap
+                            if (reflType.floatValue == 2)
+                            {
+                                material.EnableKeyword("_MATCAP_CUBEMAP_ON");
+                                material.EnableKeyword("_MATCAP_ON");
+                                material.DisableKeyword("_PBRREFL_ON");
+                                materialEditor.ShaderProperty(matcapStyle, "Blend Mode");
+                                materialEditor.TexturePropertySingleLine(Styles.MatcapCubemap, bakedCube);
+                                materialEditor.TexturePropertySingleLine(Styles.MatcapMask, roughMap);
+                                materialEditor.ShaderProperty(metal, "Intensity", 2);
+                                materialEditor.ShaderProperty(reflSmooth, "Roughness", 2);
+                            }
+                        }
+                        else
+                        {
+                            material.DisableKeyword("_REFLECTIONS_ON");
+                            material.DisableKeyword("_PBRREFL_ON");
+                            material.DisableKeyword("_MATCAP_ON");
+                            material.DisableKeyword("_MATCAP_CUBEMAP_ON");
+                        }
+                //-----
 
                 //emission
                 XSStyles.Separator();
-                EditorGUILayout.BeginHorizontal();
-                materialEditor.ShaderProperty(emissiveToggle, "Emission");
-                XSStyles.helpPopup(showHelp, "Emission", "Emission is the act of a surface emitting light. \n\nThe Emission Map is generally a black and white texture used to mark where emission can happen. Black would cut off all emission, while white would allow full emission in a given area. \n\n You can adjust how bright the emission is, and the color of it, through the color picker. ", "Okay");
+                    EditorGUILayout.BeginHorizontal();
+                    materialEditor.ShaderProperty(emissiveToggle, "Emission");
+                    XSStyles.helpPopup(showHelp, "Emission", "Emission is the act of a surface emitting light. \n\nThe Emission Map is generally a black and white texture used to mark where emission can happen. Black would cut off all emission, while white would allow full emission in a given area. \n\n You can adjust how bright the emission is, and the color of it, through the color picker. ", "Okay");
                 EditorGUILayout.EndHorizontal();
                 GUI.skin = null;
                 if (emissiveToggle.floatValue == 1)
