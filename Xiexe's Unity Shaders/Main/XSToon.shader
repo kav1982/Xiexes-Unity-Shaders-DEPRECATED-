@@ -12,13 +12,14 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(Horizontal,0,Vertical,1)] _RampDir ("Shadow Ramp Direction", Int) = 1
 		[Enum(Sharp,0,Smooth,1,Off,2)] _RimlightType("Rimlight Type", Int) = 0
 		[Enum(On,0,Off,1)] _UseReflections ("Use Reflections", Int) = 1
-		[Enum(No,0,Yes,1)] _UseOnlyBakedCube ("UseBakedReflOnly", Int) = 0
 		[Enum(Sharp,0,Smooth,1)] _ShadowType ("Recieved Shadow Type", Int) = 0
 		[Enum(PBR,0,Matcap,1,Cubemap,2)] _ReflType ("Reflection Type", Int) = 0
 		[Enum(Add,0,Multiply,1,Subtract,2)] _MatcapStyle ("Matcap Blend Mode", Int) = 1
 		[Enum(Dot,0,Anistropic,1)] _StylizedReflStyle ("StylizedReflStyle", Int) = 0
 		[Enum(Use World Color, 0, Use Ramp Color, 1)] _RampColor ("Ramp Color", Int) = 1
 		[Enum(Smooth,0,Sharp,1)]_SpecularStyle("Specular Style", Int) = 0
+		[Enum(On,0,Off,1)]_UseSSS("Use SSS", Int) = 1
+		[Enum(On,0,Off,1)]_UseSpecular("Use Specular", Int) = 1
 		
 	//Textures
 		_MainTex("Main Tex", 2D) = "white" {}
@@ -32,9 +33,9 @@ Shader "Xiexe/Toon/XSToon"
 		_RoughMap("Rough Map", 2D) = "white" {}
 		_BakedCube("Local Cubemap", Cube) = "black" {}
 		_EmissiveTex("Emissive Tex", 2D) = "white" {}
-		_OcclusionMap("AO Map", 2D) = "white" {}
+		_OcclusionMap("AO Map", 2D) = "black" {}
 
-		_OcclusionStrength("Occlusion Strength", Range(0,15)) = 1
+		_OcclusionStrength("Occlusion Strength", Range(0,1)) = 1
 		_NormalStrength("Normal Strength", float) = 1
 		_DetailNormalStrength("Detail Normal Strength", float) = 1
 
@@ -57,6 +58,14 @@ Shader "Xiexe/Toon/XSToon"
 		[Toggle]_SolidRimColor("Solid Rim Color", Float) = 0
 		_anistropicAX("aY", range(0,1)) = 0.75
 		_anistropicAY("aX", range(0,1)) = 0.75
+
+		_SSSDist("fLTDistortion", float) = 1
+		_SSSPow("iLTPower", float ) = 1
+		_SSSCol("SSS Color", color) = (1,1,1,1)
+		_SSSIntensity("SSS intensity", float) = 1
+		_ThicknessMap("Thickness Map", 2D) = "black" {}
+		[Toggle]_invertThickness("Invert Thickness Map", Float) = 0 
+		_ThicknessMapPower("Thickness Map Power", range(0.01,1)) = 1
 
 	//Don't delete these or comment them out, they are needed. Not sure why as of now.
 		[HideInInspector] _texcoord2( "", 2D ) = "white" {}
@@ -137,10 +146,8 @@ Shader "Xiexe/Toon/XSToon"
 		CGPROGRAM
 		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
 		#pragma shader_feature _ _REFLECTIONS_ON
-		#pragma shader_feature _ _PBRREFL_ON
+		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
 		#pragma shader_feature _ _ANISTROPIC_ON
-		#pragma shader_feature _ _MATCAP_ON
-		#pragma shader_feature _ _MATCAP_CUBEMAP_ON
 		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON
 
 

@@ -18,11 +18,6 @@ public class XSToonEditor : ShaderGUI
         Advanced
     }
 
-    public enum UseSpecular
-    {
-        On,
-        Off
-    }
 
     // Styles for most options on the texture - shows name and mouseover description
     //public static GUIContent nameText = new GUIContent("name", "desc");
@@ -59,6 +54,7 @@ public class XSToonEditor : ShaderGUI
         public static GUIContent detailNormal = new GUIContent("Detail Normal", "Detail Normals. These get blended on top of your regular normal for upclose detailing.");
         public static GUIContent detailMask = new GUIContent("Detail Mask", "Detail normal mask. Black to white, white = area with setail normals, black = area without.");
         public static GUIContent occlusionMap = new GUIContent("Occlusion Map", "Occlusion map. Used to bake shadowing into areas by removing Ambient Color. Black to White texture.");
+        public static GUIContent thicknessMap = new GUIContent("Thickness Map", "Used to show 'Thickness' in an area by stopping light from coming through. Black to white texture, Black means less light comes through.");
     }
 
     void DoFooter()
@@ -129,6 +125,16 @@ public class XSToonEditor : ShaderGUI
 	MaterialProperty detailNormalStrength;
     MaterialProperty occlusionMap;
     MaterialProperty occlusionStrength;
+    MaterialProperty ThicknessMap;
+    MaterialProperty SSSDist;
+	MaterialProperty SSSPow;
+    MaterialProperty SSSCol;
+	MaterialProperty SSSIntensity;
+	MaterialProperty invertThickness;
+	MaterialProperty ThicknessMapPower;
+    MaterialProperty UseSSS;
+    MaterialProperty UseSpecular;
+    
 
     public Texture ramp;
 
@@ -136,8 +142,6 @@ public class XSToonEditor : ShaderGUI
     public static GUISkin _xsSkin;
     public static string uiPath;
     bool showHelp = false;
-
-    public UseSpecular useSpec;
     private float oldSpec;
 
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
@@ -186,6 +190,15 @@ public class XSToonEditor : ShaderGUI
             detailNormalStrength = ShaderGUI.FindProperty("_DetailNormalStrength", props);
             occlusionMap = ShaderGUI.FindProperty("_OcclusionMap", props);
             occlusionStrength = ShaderGUI.FindProperty("_OcclusionStrength", props);
+            ThicknessMap = ShaderGUI.FindProperty("_ThicknessMap", props); 
+            SSSDist = ShaderGUI.FindProperty("_SSSDist", props);
+            SSSPow = ShaderGUI.FindProperty("_SSSPow", props);
+            SSSIntensity = ShaderGUI.FindProperty("_SSSIntensity", props);
+            SSSCol = ShaderGUI.FindProperty("_SSSCol", props);
+            invertThickness = ShaderGUI.FindProperty("_invertThickness", props);
+            ThicknessMapPower = ShaderGUI.FindProperty("_ThicknessMapPower", props);
+            UseSSS = ShaderGUI.FindProperty("_UseSSS", props); 
+            UseSpecular = ShaderGUI.FindProperty("_UseSpecular", props);
 
             //advanced options
             colorMask = ShaderGUI.FindProperty("_colormask", props);
@@ -282,7 +295,7 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.TextureScaleOffsetProperty(detailNormal);
                         materialEditor.TexturePropertySingleLine(Styles.detailMask, detailMask);
                 //-----
-
+                
                 //shadow ramp
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
@@ -306,11 +319,11 @@ public class XSToonEditor : ShaderGUI
                 //specular
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
-                        useSpec = (UseSpecular)EditorGUILayout.EnumPopup("Use Specular", useSpec);
+                        materialEditor.ShaderProperty(UseSpecular, "Specular");
                         XSStyles.helpPopup(showHelp, "Specularity", "Specular reflections are the result of light bouncing off of an object. \n\nThis effect is generally used to show gloss on things such as a shiny plastic material. \n\nYou can mask out where reflections can happen with the Specular Map, and you can make the reflections reflect in a pattern with the Specular Pattern. The default texture, for instance, would reflect light in the pattern of lines.", "Okay");
                     EditorGUILayout.EndHorizontal();
                         EditorGUI.BeginChangeCheck();
-                        if (useSpec == UseSpecular.On)
+                        if (UseSpecular.floatValue == 0)
                         {    
                                 materialEditor.TexturePropertySingleLine(Styles.specMapText, specMap);
                             GUI.skin = null;
@@ -331,7 +344,7 @@ public class XSToonEditor : ShaderGUI
                             }
                             materialEditor.ShaderProperty(specIntensity, Styles.sintensityText, 3);
                         }
-                        if(useSpec == UseSpecular.Off)
+                        else
                         {
                             material.SetFloat("_SpecularIntensity", 0);
                         }
@@ -340,7 +353,7 @@ public class XSToonEditor : ShaderGUI
                 //metallic
                     XSStyles.Separator();
                         EditorGUILayout.BeginHorizontal();
-                        materialEditor.ShaderProperty(useRefl, "Use Reflections");
+                        materialEditor.ShaderProperty(useRefl, "Reflections");
                         XSStyles.helpPopup(showHelp, "Reflections", "This panel is all about reflections. XSToon supports many styles of reflections. \n\n-PBR \n This is what you think about when you think reflections - these will sample the reflection probes in a room and reflect them back off of the surface. \n\n-Matcap \n This takes a SphereMap texture and maps it based on your viewing direction to the surface, to simulate reflections. \n\n -Matcap Cubemap \n This is actually just a cubemap reflection, but you can plug any cubemap in and have it reflect, as if you were in that environment. \n\n -Stylized \n Stylized has two options, Dot, and Anistropic. Dot will reflect light in a sharp dot, similar to what you'd see in anime. Anistropic will reflect light in a horizontal line across the object, good for hair.", "Okay");
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
@@ -352,8 +365,9 @@ public class XSToonEditor : ShaderGUI
                             if (reflType.floatValue == 0)
                             {
                                 materialEditor.TexturePropertySingleLine(Styles.bakedCube, bakedCube);
-                                material.DisableKeyword("_MATCAP_ON");
                                 material.EnableKeyword("_PBRREFL_ON");
+                                material.DisableKeyword("_MATCAP_ON");
+                                material.DisableKeyword("_MATCAP_CUBEMAP_ON");
                                 materialEditor.TexturePropertySingleLine(Styles.MetalMap, metalMap);
                                 materialEditor.ShaderProperty(metal, "Metallic", 2);
                                 materialEditor.TexturePropertySingleLine(Styles.roughMap, roughMap);
@@ -375,7 +389,7 @@ public class XSToonEditor : ShaderGUI
                             if (reflType.floatValue == 2)
                             {
                                 material.EnableKeyword("_MATCAP_CUBEMAP_ON");
-                                material.EnableKeyword("_MATCAP_ON");
+                                material.DisableKeyword("_MATCAP_ON");
                                 material.DisableKeyword("_PBRREFL_ON");
                                 materialEditor.ShaderProperty(matcapStyle, "Blend Mode");
                                 materialEditor.TexturePropertySingleLine(Styles.MatcapCubemap, bakedCube);
@@ -391,6 +405,34 @@ public class XSToonEditor : ShaderGUI
                             material.DisableKeyword("_MATCAP_ON");
                             material.DisableKeyword("_MATCAP_CUBEMAP_ON");
                         }
+                //-----
+
+                //Subsurface Scattering
+                XSStyles.Separator();
+                    EditorGUILayout.BeginHorizontal();
+                        materialEditor.ShaderProperty(UseSSS, "Subsurface Scattering");
+                        XSStyles.helpPopup(showHelp, "Subsurface Scattering", "Subsurface scattering is the act of light bouncing and scattering inside of a material before exiting the other side. This can be used to simulate the softness of skin, or things such as marble statues, which might have light bounces around and make them appear 'translucent.'", "Okay");
+                        GUI.skin = null;
+                    EditorGUILayout.EndHorizontal();
+                    if(UseSSS.floatValue == 0)
+                    {
+                        // ThicknessMap
+                        // SSSDist
+                        // SSSPow
+                        // SSSIntensity
+                        // invertThickness
+                        // ThicknessMapPower
+
+                         materialEditor.TexturePropertySingleLine(Styles.thicknessMap, ThicknessMap, SSSCol);
+                         materialEditor.ShaderProperty(invertThickness, "Invert", 3);
+                         materialEditor.ShaderProperty(ThicknessMapPower, "Power", 3);
+                         materialEditor.ShaderProperty(SSSDist, "Displacement",2);
+                         materialEditor.ShaderProperty(SSSPow, "Sharpness",2);
+                         materialEditor.ShaderProperty(SSSIntensity, "Intensity",2);
+                    }
+                    else{
+                        material.SetFloat("_SSSIntensity", 0);
+                    }
                 //-----
 
                 //emission
@@ -409,25 +451,6 @@ public class XSToonEditor : ShaderGUI
                     material.SetColor("_EmissiveColor", Color.black);
                 }
 
-
-
-
-                //Debug button
-                // bool showHelpBoxDebug = false;
-                // XSStyles.helpPopup(showHelpBoxDebug, "ShowDebugBox", "This is a debug box", "Thanks.");
-
-                // 
-
-                //-----
-
-                //Baked Lighting Settings
-                // XSStyles.Separator();
-                // EditorGUILayout.BeginHorizontal();
-                //     GUILayout.Label("Baked Lighting Settings", EditorStyles.boldLabel);
-                //     XSStyles.helpPopup(showHelp, "Baked Light Direction", "This is a fallback light direction that will only show in baked lighting. \n\nThis setting will soon be deprecated in favor of a method that actually gets proper directionality.", "Okay");
-                // EditorGUILayout.EndHorizontal();
-                // EditorGUILayout.Space();
-                // materialEditor.ShaderProperty(simLightDir, Styles.simLightText);
                 GUI.skin = null;
                 if (advMode.floatValue == 1)
                 {

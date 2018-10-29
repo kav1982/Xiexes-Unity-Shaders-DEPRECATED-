@@ -50,6 +50,7 @@
 		sampler2D _MetallicMap;
 		sampler2D _RoughMap;
 		sampler2D _OcclusionMap;
+		sampler2D _ThicknessMap;
 		samplerCUBE _BakedCube;
 		float4 _MainTex_ST;
 		float4 _EmissiveTex_ST;
@@ -66,6 +67,7 @@
 		float4 _SimulatedLightDirection;
 	 	float4 _Color;
 		float3 _RimColor;
+		float3 _SSSCol;
 		float2 _NormalTiling;
 		float2 _SpecularPatternTiling;
 		float _EmissiveStrength;
@@ -97,6 +99,11 @@
 		float _NormalStrength;
 		float _DetailNormalStrength;
 		float _OcclusionStrength;
+		float _SSSDist;
+		float _SSSPow;
+		float _SSSIntensity;
+		float _invertThickness;
+		float _ThicknessMapPower;
 
 	//Custom Helper Functions		
 		float4x4 tMatrixFunc(float3 x, float3 y, float3 z)
@@ -151,13 +158,17 @@
 				half4 c = 0;
 				#if DIRECTIONAL
 					float steppedAtten = round(data.atten);
-					float ase_lightAtten = lerp(steppedAtten, data.atten, _ShadowType);
+					float attenuation = lerp(steppedAtten, data.atten, _ShadowType);
+					//This is needed to make sure we don't see the cookie box for lightatten.
+					attenuation = lerp(0, attenuation, _LightColor0.a);
 				#else
-					float3 ase_lightAttenRGB = smoothstep(0, 1, (gi.light.color / ( ( _LightColor0.rgb ) + 0.000001 )));
-					float ase_lightAtten = (max( max( ase_lightAttenRGB.r, ase_lightAttenRGB.g ), ase_lightAttenRGB.b ));
+					float3 attenuationRGB = gi.light.color / ( ( _LightColor0.rgb ) + 0.000001 );
+					float attenuation = max( max( attenuationRGB.r, attenuationRGB.g ), attenuationRGB.b );
 				#endif
 		//-----
-			
+			//debug atten
+				//return attenuation;
+
 		//Set up UVs
 				float2 texcoord1 = i.uv_texcoord;
 				float2 texcoord2 = i.uv2_texcoord2;
@@ -181,25 +192,27 @@
 				float3 tangent = i.tangentDir;
 				half3 binorm = cross(worldNormal, tangent);
 				float3 stereoWorldViewDir = StereoWorldViewDir(i.worldPos);
-		//-----
+		//-----	
 
 		//Setup Direct and Indirect Light
-				float3 lightColor = _LightColor0; 
-
 				//We're sampling ShadeSH9 at 0,0,0 to just get the color.
 				half3 indirectDiffuse = ShadeSH9(float4(0,0,0,1));
+				float3 lightColor = _LightColor0; 
 
+			//DEPRECATED AS OF 1.5b3
 				//Do another shadeSH9 sample to get directionality from light probes, but only from the strongest averaged direction.
 				//This gets rid of the small artifcat normally present in ShadeSH9, which is the small round cut in the back of the shadow.
-				half3 indirectDiffuseLight = ShadeSH9(float4(worldNormal.xyz,1));
-				half3 reverseindirectDiffuseLight = ShadeSH9(float4(-worldNormal.xyz,1));
-				half3 noAmbientindirectDiffuseLight = (indirectDiffuseLight - reverseindirectDiffuseLight)/2;
-				float3 indirectLightSH = noAmbientindirectDiffuseLight * 0.5 + 0.533;
-				float averagedindirect = length(indirectLightSH)/sqrt(3.0) ;
+				// half3 indirectDiffuseLight = ShadeSH9(float4(worldNormal.xyz,1));
+				// half3 reverseindirectDiffuseLight = ShadeSH9(float4(-worldNormal.xyz,1));
+				// half3 noAmbientindirectDiffuseLight = (indirectDiffuseLight - reverseindirectDiffuseLight)/2;
+				// float3 indirectLightSH = noAmbientindirectDiffuseLight;
+				// float averagedindirect = length(indirectLightSH)/sqrt(3.0) ;
+			//-----
 
 				//Worldspace light direction and simulated light directions
 				float3 worldLightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
-				float4 simulatedLight = normalize(indirectLightSH.xyzz);//normalize( _SimulatedLightDirection );
+				//A way to get dominant light direction from Unity's Spherical Harmonics.
+				float3 simulatedLight = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);//normalize(indirectLightSH.xyzz);//normalize( _SimulatedLightDirection );
 
 				//figure out whether we are in a realtime lighting scnario, or baked, and return it as a 0, or 1 (1 for realtime, 0 for baked)
 				float light_Env = float(any(_WorldSpaceLightPos0.xyz));
@@ -234,21 +247,32 @@
 				float bdh = dot(binorm, halfVector);
 		//-----
 
+		//Do Subsurface Scattering
+			//SSS method lifted from GDC 2011 conference by Colin Barre-Bresebois & Marc Bouchard and modified by me
+				float3 thicknessMap = pow(tex2D(_ThicknessMap, uv_MainTex), _ThicknessMapPower);
+				float3 vSSLight = light_Dir + worldNormal * _SSSDist;
+				float vdotSS = pow(saturate(dot(viewDir, -vSSLight)), _SSSPow) * _SSSIntensity * lerp(1-thicknessMap, thicknessMap, _invertThickness);
+				float3 sss = lerp(1, attenuation, light_Env) * (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
+		//-----
+
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
-				float3 occlusionMap = tex2Dlod(_OcclusionMap, float4(i.uv_texcoord,0,_OcclusionStrength));// * _OcclusionStrength;
-				float remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.r;
-				float remappedRampBaked = averagedindirect * occlusionMap.r;
+				float3 occlusionMap = tex2D(_OcclusionMap, i.uv_texcoord) * _OcclusionStrength;
+				float remappedRamp = NdL * 0.5 + 0.5;
+				//float remappedRampBaked = NdL * 0.5 + 0.5;//averagedindirect;
 
 				//rimlight typing
 				float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
 				float sharpRim = (step(0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
 				float3 finalRim = lerp(sharpRim, smoothRim, _RimlightType) * _RimColor;
+			
+			//DEPRECATED AS OF 1.5b3
+				//float3 shadowRamp = tex2D( _ShadowRamp, lerp(float2(remappedRamp,remappedRamp), float2(remappedRampBaked,remappedRampBaked), 1-light_Env)).xyz;	
+			//-----
+				float3 shadowRamp = tex2D( _ShadowRamp, remappedRamp.xx).xyz;	
 
-				float3 shadowRamp = tex2D( _ShadowRamp, lerp(float2(remappedRamp,remappedRamp), float2(remappedRampBaked,remappedRampBaked), 1-light_Env)).xyz;	
-				
 				//Initialize finalshadow here, but we will be editing this based on the lighting env below
-				float3 finalShadow = saturate(((ase_lightAtten * .5) - (1-shadowRamp.r)));
+				float3 finalShadow; //= saturate(((attenuation * .5) - (1-shadowRamp.r)));
 
 				//We default to baked lighting situations, so we use these values
 				float3 indirectLight = indirectDiffuse;
@@ -258,20 +282,20 @@
 				if (light_Env == 1) 
 				{
 					#if _WORLDSHADOWCOLOR_ON
-						finalShadow = saturate(((finalNdL * ase_lightAtten * .5) - (1-shadowRamp.r)));
+						finalShadow = saturate(((finalNdL * attenuation) - (1-shadowRamp.r)));
 						lightColor = lightColor * (finalShadow);
 						finalLight = lightColor + (indirectLight);
 					#else
+						float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
 						#if DIRECTIONAL
-							float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
-							float3 lightAtten = ase_lightAtten + rampBaseColor;
+							float3 lightAtten = attenuation + rampBaseColor;
 							shadowRamp = tex2D(_ShadowRamp, float2(remappedRamp,remappedRamp));
 							finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
 							lightColor = lightColor;
 							finalLight = (saturate(indirectLight * 0.25) + lightColor) * finalShadow;
 						#else
-							finalShadow = saturate(((finalNdL * ase_lightAtten * .5) - (1-shadowRamp.r)));
-							lightColor = lightColor * (finalShadow);
+							finalShadow = saturate(((finalNdL * (attenuation)) - (1-shadowRamp.r)));
+							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
 							finalLight = lightColor + (indirectLight);
 						#endif
 					#endif
@@ -326,28 +350,30 @@
 						{
 							reflection = texCUBElod(_BakedCube, float4(reflectedDir, roughness * 6));
 						}
-					#endif
+				#endif
 			//--
 
 			//Matcap	
 				//Note: This matcap is intended for VR. 
-					#ifdef _MATCAP_ON
-							roughMap = tex2D(_RoughMap, uv_MainTex);
-						#ifdef _MATCAP_CUBEMAP_ON
-							reflection = texCUBElod(_BakedCube, float4(reflectedDir, _ReflSmoothness * 6));
-						#else
-							float3 sampleY = float3(0,1,0);
-							float3 VcrossY = cross(viewDir, sampleY);
-							float3 VCYcrossV = cross(VcrossY, viewDir);
-							float4x4 tmat = tMatrixFunc(viewDir, VcrossY, VCYcrossV);
-							float4 remapUV = mul(worldNormal, tmat);
-							remapUV = remapUV * 0.5 + 0.5;
-							reflection = tex2Dlod(_MetallicMap, float4(remapUV.yz, 0, (_ReflSmoothness * 6)));
-						#endif
-					#endif
+				#ifdef _MATCAP_ON
+					roughMap = tex2D(_RoughMap, uv_MainTex);
+					float3 sampleY = float3(0,1,0);
+					float3 VcrossY = cross(viewDir, sampleY);
+					float3 VCYcrossV = cross(VcrossY, viewDir);
+					float4x4 tmat = tMatrixFunc(viewDir, VcrossY, VCYcrossV);
+					float4 remapUV = mul(worldNormal, tmat);
+					remapUV = remapUV * 0.5 + 0.5;
+					reflection = tex2Dlod(_MetallicMap, float4(remapUV.yz, 0, (_ReflSmoothness * 6)));
 				#endif
 			//--
 
+			//Cubemap Baked
+				#ifdef _MATCAP_CUBEMAP_ON
+					roughMap = tex2D(_RoughMap, uv_MainTex);
+					reflection = texCUBElod(_BakedCube, float4(reflectedDir, _ReflSmoothness * 6));
+				#endif
+			//--	
+			#endif
 		//-----
 			
 		//Do Final Lighting
@@ -355,7 +381,7 @@
 				float3 finalAddedLight = (finalRim + specularRefl) * saturate((saturate(MainColor + 0.5) * pow(finalLight, 2) * (shadowRamp))).rgb;
 				float3 finalColor = MainColor.xyz;
 
-				//Add Reflections
+			//Add Reflections
 				#ifdef _REFLECTIONS_ON
 				
 				//Do PBR
@@ -367,7 +393,7 @@
 				//--
 
 				//Do Matcap
-					#ifdef _MATCAP_ON
+					#if  defined(_MATCAP_ON) || defined(_MATCAP_CUBEMAP_ON)
 						//Additive
 						if(_MatcapStyle == 0)
 						{
@@ -387,8 +413,9 @@
 				//--
 				
 				#endif
-				//-----
-			c.rgb = finalColor * (finalLight + finalAddedLight);
+			//--
+
+			c.rgb = finalColor * (finalLight + sss.xyz + finalAddedLight);
 		//-----
 		
 		//Do Alpha Modes
