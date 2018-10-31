@@ -305,9 +305,9 @@
 								finalLight = (indirectAvg + lightColor) * finalShadow;
 							#endif
 						#else
-							finalShadow = saturate(((shadowRamp * saturate(attenuation * 6)) - (1-shadowRamp.r)));
+							finalShadow = saturate(((shadowRamp * attenuation) - (1-shadowRamp.r)));
 							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
-							float finalLength = length(finalShadow);
+							float finalLength = Luminance(finalShadow);
 							#if _MIXEDSHADOWCOLOR_ON
 								finalLight = (lightColor + indirectDiffuse) * finalLength;
 							#else
