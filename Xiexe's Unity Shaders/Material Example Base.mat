@@ -22,6 +22,14 @@ Material:
         m_Texture: {fileID: 8900000, guid: 400c139eefcba334d88fae7b76fd0322, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormal:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissiveTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -38,6 +46,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _RoughMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -47,11 +59,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecularMap:
-        m_Texture: {fileID: 2800000, guid: 5c8adfdf1c2841b4a95778edab97ca2c, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecularPattern:
-        m_Texture: {fileID: 2800000, guid: a9d899b9b5f746b4cbf7ec49e7b32ccd, type: 3}
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ThicknessMap:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _texcoord:
@@ -65,9 +81,12 @@ Material:
     m_Floats:
     - _Culling: 2
     - _Cutoff: 0.5
-    - _Emissive: 0
+    - _DetailNormalStrength: 1
+    - _Emissive: 1
     - _MatcapStyle: 1
     - _Metallic: 0
+    - _NormalStrength: 1
+    - _OcclusionStrength: 1
     - _Offset: 0
     - _RampColor: 1
     - _RampDir: 1
@@ -77,11 +96,14 @@ Material:
     - _RimIntensity: 0.8
     - _RimWidth: 0.2
     - _RimlightType: 0
+    - _SSSDist: 1
+    - _SSSIntensity: 0
+    - _SSSPow: 1
     - _Saturation: 1
     - _ShadowType: 0
     - _SolidRimColor: 0
-    - _SpecularArea: 1
-    - _SpecularIntensity: 5
+    - _SpecularArea: 0.5
+    - _SpecularIntensity: 0
     - _SpecularStyle: 0
     - _Stencil: 0
     - _StencilComp: 0
@@ -90,8 +112,10 @@ Material:
     - _StencilZFail: 0
     - _StylelizedIntensity: 1
     - _StylizedReflStyle: 0
-    - _UseOnlyBakedCube: 0
+    - _ThicknessMapPower: 1
     - _UseReflections: 1
+    - _UseSSS: 1
+    - _UseSpecular: 1
     - _UseUV2forNormalsSpecular: 0
     - _WriteMask: 255
     - _ZTest: 4
@@ -102,6 +126,7 @@ Material:
     - _anistropicAY: 0.75
     - _colormask: 15
     - _dstblend: 0
+    - _invertThickness: 0
     - _mode: 0
     - _srcblend: 1
     m_Colors:
@@ -109,5 +134,6 @@ Material:
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
     - _NormalTiling: {r: 1, g: 1, b: 0, a: 0}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
-    - _SimulatedLightDirection: {r: 0, g: 45, b: 90, a: 0}
+    - _SSSCol: {r: 1, g: 1, b: 1, a: 1}
     - _SpecularPatternTiling: {r: 20, g: 20, b: 0, a: 0}
+    - _SubsurfaceColor: {r: 0, g: 0, b: 0, a: 0}

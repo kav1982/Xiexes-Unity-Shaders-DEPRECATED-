@@ -215,16 +215,13 @@
 				{
 					light_Dir = float4( worldLightDir , 0.0 );
 				}
-
-				#if !defined(POINT) && !defined(SPOT) && !defined(POINT_COOKIE)
-					if(!any(_WorldSpaceLightPos0))
-					{
-						if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
-						{
-							light_Dir = normalize(float4(1, 1, 1, 0));
-						}
-					}
-				#endif
+				// else
+				// {
+				// 	if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
+				// 	{
+				// 		light_Dir = normalize(float4(1, 1, 1, 0));
+				// 	}
+				// }
 
 				half3 halfVector = normalize(light_Dir + viewDir);
 		//-----
@@ -257,9 +254,12 @@
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
 				float3 occlusionMap = pow(tex2D(_OcclusionMap, i.uv_texcoord), _OcclusionStrength);
-				
 				float remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
-
+				// #if DIRECTIONAL
+				// 	remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
+				// #else
+				// 	remappedRamp = (NdL * 0.5 + 0.5) * attenuation * occlusionMap.x;
+				// #endif
 
 				//rimlight typing
 				float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
@@ -271,6 +271,8 @@
 				float indirectAvg = length(indirectDiffuse);
 				float3 finalShadow;
 				float3 finalLight;
+				
+				//return remappedRamp * attenuation;
 
 				//We default to baked lighting situations, so we use these values
 				#if _WORLDSHADOWCOLOR_ON
@@ -302,12 +304,13 @@
 								finalLight = (indirectAvg + lightColor) * finalShadow;
 							#endif
 						#else
-							finalShadow = saturate(((shadowRamp * (attenuation)) - (1-shadowRamp.r)));
+							finalShadow = saturate(((shadowRamp * saturate(attenuation * 6)) - (1-shadowRamp.r)));
 							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
+							float finalLength = length(finalShadow);
 							#if _MIXEDSHADOWCOLOR_ON
-								finalLight = (lightColor + indirectDiffuse) * rampAvg;
+								finalLight = (lightColor + indirectDiffuse) * finalLength;
 							#else
-								finalLight = lightColor * finalShadow;
+								finalLight = (indirectAvg + lightColor) * finalLength;
 							#endif
 						#endif
 					#endif
