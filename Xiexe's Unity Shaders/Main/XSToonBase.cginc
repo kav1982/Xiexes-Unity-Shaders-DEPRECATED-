@@ -167,7 +167,7 @@
 				#endif
 		//-----
 			//debug atten
-				//return attenuation;
+				// return attenuation;
 
 		//Set up UVs
 				float2 texcoord1 = i.uv_texcoord;
@@ -246,7 +246,12 @@
 				float3 thicknessMap = pow(tex2D(_ThicknessMap, uv_MainTex), max( 0.01, _ThicknessMapPower));
 				float3 vSSLight = light_Dir + worldNormal * _SSSDist;
 				float vdotSS = pow(saturate(dot(viewDir, -vSSLight)), max(0.2, _SSSPow)) * _SSSIntensity * lerp(1-thicknessMap, thicknessMap, _invertThickness);
-				float3 sss = (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
+				float3 sss;
+				#if defined(POINT) || defined(SPOT)
+					sss = attenuation * (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
+				#else
+					sss = (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
+				#endif
 		//-----
 
 		//Do Recieved Shadows and lighting
@@ -262,49 +267,51 @@
 				float3 finalRim = lerp(sharpRim, smoothRim, _RimlightType) * _RimColor;
 				
 				float3 shadowRamp = tex2D( _ShadowRamp, remappedRamp.xx).xyz;	
-				float rampLength = length(shadowRamp);
+				float rampAvg = length(shadowRamp);
+				float indirectAvg = length(indirectDiffuse);
 				float3 finalShadow;
 				float3 finalLight;
 
 				//We default to baked lighting situations, so we use these values
 				#if _WORLDSHADOWCOLOR_ON
-					finalLight = indirectDiffuse * rampLength;
+					finalLight = indirectDiffuse * rampAvg;
 				#else
-					finalLight = indirectDiffuse * shadowRamp;
+					#if _MIXEDSHADOWCOLOR_ON
+						finalLight = indirectDiffuse * shadowRamp;
+					#else
+						finalLight = indirectAvg * shadowRamp;
+					#endif
 				#endif
 
-
 				//If our lighting environment matches the number for realtime lighting, use these numbers instead
-				if (light_Env == 1) 
+				if (light_Env != 0) 
 				{
 					#if _WORLDSHADOWCOLOR_ON
-						finalShadow = saturate((rampLength * attenuation) - (1-shadowRamp.r));
+						finalShadow = saturate((rampAvg * attenuation) - (1-shadowRamp.r));
 						lightColor = lightColor * (finalShadow);
 						finalLight = lightColor + (indirectDiffuse);
 					#else
 						float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
-						#if DIRECTIONAL
+						#if defined(DIRECTIONAL)
 							float3 lightAtten = attenuation + rampBaseColor;
-							shadowRamp = tex2D(_ShadowRamp, float2(remappedRamp,remappedRamp));
 							finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
 							lightColor = lightColor;
 							#if _MIXEDSHADOWCOLOR_ON
 								finalLight = (indirectDiffuse + lightColor) * finalShadow;
 							#else
-								finalLight = (length(indirectDiffuse) + lightColor) * finalShadow;
+								finalLight = (indirectAvg + lightColor) * finalShadow;
 							#endif
 						#else
-							finalShadow = saturate(((finalNdL * (attenuation)) - (1-shadowRamp.r)));
+							finalShadow = saturate(((shadowRamp * (attenuation)) - (1-shadowRamp.r)));
 							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
 							#if _MIXEDSHADOWCOLOR_ON
-								finalLight = (lightColor + indirectDiffuse) * finalShadow;
+								finalLight = (lightColor + indirectDiffuse) * rampAvg;
 							#else
-								finalLight = (length(indirectDiffuse) + lightColor) * finalShadow;
+								finalLight = lightColor * finalShadow;
 							#endif
 						#endif
 					#endif
 				}
-				//return finalShadow.xyzz;
 
 				float4 MainTex = pow(tex2D( _MainTex, uv_MainTex ), _Saturation);
 				float4 MainColor = MainTex * _Color;
