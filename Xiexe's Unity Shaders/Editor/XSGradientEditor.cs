@@ -119,6 +119,8 @@ public class XSGradientEditor : EditorWindow
             texture.maxTextureSize = 512;
             texture.mipmapEnabled = false;
             texture.textureCompression = TextureImporterCompression.Uncompressed;
+            texture.sRGBTexture = false;
+
             texture.SaveAndReimport();
             AssetDatabase.Refresh();
 

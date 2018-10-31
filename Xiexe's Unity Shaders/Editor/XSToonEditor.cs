@@ -134,6 +134,8 @@ public class XSToonEditor : ShaderGUI
 	MaterialProperty ThicknessMapPower;
     MaterialProperty UseSSS;
     MaterialProperty UseSpecular;
+	MaterialProperty RampBaseAnchor;
+
     
 
     public Texture ramp;
@@ -200,6 +202,7 @@ public class XSToonEditor : ShaderGUI
             UseSSS = ShaderGUI.FindProperty("_UseSSS", props); 
             UseSpecular = ShaderGUI.FindProperty("_UseSpecular", props);
 
+
             //advanced options
             colorMask = ShaderGUI.FindProperty("_colormask", props);
             stencil = ShaderGUI.FindProperty("_Stencil", props);
@@ -209,6 +212,8 @@ public class XSToonEditor : ShaderGUI
             stencilZFail = ShaderGUI.FindProperty("_StencilZFail", props);
             zwrite = ShaderGUI.FindProperty("_ZWrite", props);
             ztest = ShaderGUI.FindProperty("_ZTest", props);
+
+            RampBaseAnchor = ShaderGUI.FindProperty("_RampBaseAnchor", props);
 
             //Show Properties in Inspector
             //materialEditor.ShaderProperty(, .displayName);   
@@ -304,6 +309,8 @@ public class XSToonEditor : ShaderGUI
                     EditorGUILayout.EndHorizontal();
                         materialEditor.ShaderProperty(rampColor, "Ramp Mode", 2);
                         materialEditor.ShaderProperty(shadowType, Styles.shadowTypeText, 2);
+
+
                         //ambient
                         //ramp
                         //mixed
@@ -472,6 +479,7 @@ public class XSToonEditor : ShaderGUI
                     materialEditor.ShaderProperty(ztest, ztest.displayName, 2);
                     materialEditor.ShaderProperty(zwrite, zwrite.displayName, 2);
                     materialEditor.ShaderProperty(uv2, "UV2 for Normal/Spec", 2);
+                    materialEditor.ShaderProperty(RampBaseAnchor, "Ramp Anchor", 2);
                 }
 
             }

@@ -104,6 +104,7 @@
 		float _SSSIntensity;
 		float _invertThickness;
 		float _ThicknessMapPower;
+		float _RampBaseAnchor;
 
 	//Custom Helper Functions		
 		float4x4 tMatrixFunc(float3 x, float3 y, float3 z)
@@ -215,13 +216,13 @@
 				{
 					light_Dir = float4( worldLightDir , 0.0 );
 				}
-				// else
-				// {
-				// 	if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
-				// 	{
-				// 		light_Dir = normalize(float4(1, 1, 1, 0));
-				// 	}
-				// }
+				else
+				{
+					if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
+					{
+						light_Dir = normalize(float4(1, 1, 1, 0));
+					}
+				}
 
 				half3 halfVector = normalize(light_Dir + viewDir);
 		//-----
@@ -293,7 +294,7 @@
 						lightColor = lightColor * (finalShadow);
 						finalLight = lightColor + (indirectDiffuse);
 					#else
-						float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
+						float3 rampBaseColor = tex2D(_ShadowRamp, float2(_RampBaseAnchor,_RampBaseAnchor));
 						#if defined(DIRECTIONAL)
 							float3 lightAtten = attenuation + rampBaseColor;
 							finalShadow = min(saturate(lightAtten), shadowRamp.xyz);

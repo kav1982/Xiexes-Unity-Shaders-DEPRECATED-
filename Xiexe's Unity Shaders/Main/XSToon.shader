@@ -92,6 +92,8 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(Off,0,On,1)] _ZWrite("ZWrite", Int) = 1
 		[Enum(UnityEngine.Rendering.CompareFunction)] _ZTest ("ZTest", Int) = 4
 		[Enum(None,0,Alpha,1,Red,8,Green,4,Blue,2,RGB,14,RGBA,15)] _colormask("Color Mask", Int) = 15 
+
+		_RampBaseAnchor("RampBaseAnchor", Range(0,1)) = 0.5
 	}
 
 	SubShader
