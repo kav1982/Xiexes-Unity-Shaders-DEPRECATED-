@@ -177,6 +177,7 @@
 				float2 uv_Normal = UVSet * _Normal_ST.xy + _Normal_ST.zw;
 				float2 uv_DetailNormal = UVSet * _DetailNormal_ST.xy + _DetailNormal_ST.zw;
 				float2 uv_Specular = UVSet * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
+				float2 uv_SpecularPattern = UVSet * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
@@ -199,16 +200,6 @@
 				half3 indirectDiffuse = ShadeSH9(float4(0,0,0,1));
 				float3 lightColor = _LightColor0; 
 
-			//DEPRECATED AS OF 1.5b3
-				//Do another shadeSH9 sample to get directionality from light probes, but only from the strongest averaged direction.
-				//This gets rid of the small artifcat normally present in ShadeSH9, which is the small round cut in the back of the shadow.
-				// half3 indirectDiffuseLight = ShadeSH9(float4(worldNormal.xyz,1));
-				// half3 reverseindirectDiffuseLight = ShadeSH9(float4(-worldNormal.xyz,1));
-				// half3 noAmbientindirectDiffuseLight = (indirectDiffuseLight - reverseindirectDiffuseLight)/2;
-				// float3 indirectLightSH = noAmbientindirectDiffuseLight;
-				// float averagedindirect = length(indirectLightSH)/sqrt(3.0) ;
-			//-----
-
 				//Worldspace light direction and simulated light directions
 				float3 worldLightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
 				//A way to get dominant light direction from Unity's Spherical Harmonics.
@@ -225,6 +216,16 @@
 				{
 					light_Dir = float4( worldLightDir , 0.0 );
 				}
+
+				#if !defined(POINT) && !defined(SPOT) && !defined(POINT_COOKIE)
+					if(!any(_WorldSpaceLightPos0))
+					{
+						if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
+						{
+							light_Dir = normalize(float4(1, 1, 1, 0));
+						}
+					}
+				#endif
 
 				half3 halfVector = normalize(light_Dir + viewDir);
 		//-----
@@ -249,17 +250,18 @@
 
 		//Do Subsurface Scattering
 			//SSS method lifted from GDC 2011 conference by Colin Barre-Bresebois & Marc Bouchard and modified by me
-				float3 thicknessMap = pow(tex2D(_ThicknessMap, uv_MainTex), _ThicknessMapPower);
+				float3 thicknessMap = pow(tex2D(_ThicknessMap, uv_MainTex), max( 0.01, _ThicknessMapPower));
 				float3 vSSLight = light_Dir + worldNormal * _SSSDist;
-				float vdotSS = pow(saturate(dot(viewDir, -vSSLight)), _SSSPow) * _SSSIntensity * lerp(1-thicknessMap, thicknessMap, _invertThickness);
+				float vdotSS = pow(saturate(dot(viewDir, -vSSLight)), max(0.2, _SSSPow)) * _SSSIntensity * lerp(1-thicknessMap, thicknessMap, _invertThickness);
 				float3 sss = lerp(1, attenuation, light_Env) * (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
 		//-----
 
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
-				float3 occlusionMap = tex2D(_OcclusionMap, i.uv_texcoord) * _OcclusionStrength;
-				float remappedRamp = NdL * 0.5 + 0.5;
-				//float remappedRampBaked = NdL * 0.5 + 0.5;//averagedindirect;
+				float3 occlusionMap = pow(tex2D(_OcclusionMap, i.uv_texcoord), _OcclusionStrength);
+				
+				float remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
+
 
 				//rimlight typing
 				float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
@@ -269,14 +271,19 @@
 			//DEPRECATED AS OF 1.5b3
 				//float3 shadowRamp = tex2D( _ShadowRamp, lerp(float2(remappedRamp,remappedRamp), float2(remappedRampBaked,remappedRampBaked), 1-light_Env)).xyz;	
 			//-----
+				
 				float3 shadowRamp = tex2D( _ShadowRamp, remappedRamp.xx).xyz;	
-
-				//Initialize finalshadow here, but we will be editing this based on the lighting env below
-				float3 finalShadow; //= saturate(((attenuation * .5) - (1-shadowRamp.r)));
+				float3 finalShadow;
+				float3 finalLight;
 
 				//We default to baked lighting situations, so we use these values
-				float3 indirectLight = indirectDiffuse;
-				float3 finalLight = indirectLight * shadowRamp;
+				// float3 indirectDiffuse = indirectDiffuse;
+				#if _WORLDSHADOWCOLOR_ON
+					finalLight = indirectDiffuse * length(shadowRamp);
+				#else
+					finalLight = indirectDiffuse * shadowRamp;
+				#endif
+
 
 				//If our lighting environment matches the number for realtime lighting, use these numbers instead
 				if (light_Env == 1) 
@@ -284,7 +291,7 @@
 					#if _WORLDSHADOWCOLOR_ON
 						finalShadow = saturate(((finalNdL * attenuation) - (1-shadowRamp.r)));
 						lightColor = lightColor * (finalShadow);
-						finalLight = lightColor + (indirectLight);
+						finalLight = lightColor + (indirectDiffuse);
 					#else
 						float3 rampBaseColor = tex2D(_ShadowRamp, float2(0,0));
 						#if DIRECTIONAL
@@ -292,11 +299,11 @@
 							shadowRamp = tex2D(_ShadowRamp, float2(remappedRamp,remappedRamp));
 							finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
 							lightColor = lightColor;
-							finalLight = (saturate(indirectLight * 0.25) + lightColor) * finalShadow;
+							finalLight = (saturate(indirectDiffuse * 0.25) + lightColor) * finalShadow;
 						#else
 							finalShadow = saturate(((finalNdL * (attenuation)) - (1-shadowRamp.r)));
 							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
-							finalLight = lightColor + (indirectLight);
+							finalLight = lightColor + (indirectDiffuse);
 						#endif
 					#endif
 				}
@@ -306,7 +313,7 @@
 			
 			//Specular
 				float4 specularMap = tex2D(_SpecularMap, uv_Specular);
-				float specularPatternTex = tex2D(_SpecularPattern, (((UVSet - float2( 0.5,0.5)) * _SpecularPatternTiling) + float2(0.5,0.5))).r;
+				float specularPatternTex = tex2D(_SpecularPattern, (((UVSet - float2( 0.5,0.5)) * uv_SpecularPattern) + float2(0.5,0.5))).r;
 				float3 specularHighlight = float3(0,0,0);
 					#ifdef _ANISTROPIC_ON
 						//Anistropic

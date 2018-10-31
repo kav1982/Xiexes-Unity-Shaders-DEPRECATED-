@@ -43,7 +43,7 @@ public class XSToonEditor : ShaderGUI
         public static GUIContent MetalMap = new GUIContent("Metallic Map", "Black to white texture that defines areas that can be metallic, full white = full metallic, full black = no metallic, if you use this, set Metallic to 0");
         public static GUIContent roughMap = new GUIContent("Roughness Map", "Black to white texture that defines the roughness of the object white = 100% rough, black = 100% smooth. If you use this, set Roughness to 1");
         public static GUIContent bakedCube = new GUIContent("Baked Cubemap", "This is the cubemap that will be sampled for reflections if there are no reflection probes in the scene, if there are, the shader will sampler those instead.");
-        public static GUIContent shadowTypeText = new GUIContent("Shadow Style", "Received Realtime Shadow style, sharp or smooth, match this up with your shadow ramp for optimal results.");
+        public static GUIContent shadowTypeText = new GUIContent("Recieved Shadows", "Received Realtime Shadow style, sharp or smooth, match this up with your shadow ramp for optimal results.");
         public static GUIContent ReflMask = new GUIContent("Reflection Mask", "Mask for reflections, the same as the metallic mask, black to white image.");
         public static GUIContent StyleIntensity = new GUIContent("Intensity", "The intensity of the stylized reflection.");
         public static GUIContent Saturation = new GUIContent("Saturation", "Saturation of the main texture.");
@@ -275,7 +275,7 @@ public class XSToonEditor : ShaderGUI
                         }
                         else
                         {
-                            material.SetFloat("_OcclusionStrength", 0);
+                            material.SetFloat("_OcclusionStrength", 1);
                         }
                 //cutoff
                     if (material.shader == Shader.Find("Xiexe/Toon/XSToonCutout"))
@@ -302,19 +302,44 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.TexturePropertySingleLine(Styles.rampText, shadowRamp);
                         XSStyles.helpPopup(showHelp, "Shadow Ramp", "A gradient texture - horizontal or vertical. Used to control how shadows look. I.E. A smooth gradient would result in smooth shadows. \n\n If your ramp is colored, you can switch to \"Use Ramp Color\" to make your shadows inherit the color of the ramp, otherwise, your shadows will be colored based on the environment. \n\n The Shadow Style ONLY effects shadows cast onto you by other objects.", "Okay");
                     EditorGUILayout.EndHorizontal();
+                        materialEditor.ShaderProperty(rampColor, "Ramp Mode", 2);
                         materialEditor.ShaderProperty(shadowType, Styles.shadowTypeText, 2);
-                        materialEditor.ShaderProperty(rampColor, "Use Ramp Color", 2);
+                        //ambient
+                        //ramp
+                        //mixed
                         if (rampColor.floatValue == 0)
                         {
                             material.EnableKeyword("_WORLDSHADOWCOLOR_ON");
-
                         }
                         if (rampColor.floatValue == 1)
                         {
                             material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
+                            material.DisableKeyword("_MIXEDSHADOWCOLOR_ON");
                         }
+                        // if(rampColor.floatValue == 2)
+                        // {
+                        //     material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
+                        //     material.EnableKeyword("_MIXEDSHADOWCOLOR_ON");
+                        // }
                     XSStyles.callGradientEditor();
                 //-----  
+
+                //emission
+                    XSStyles.Separator();
+                        EditorGUILayout.BeginHorizontal();
+                        materialEditor.ShaderProperty(emissiveToggle, "Emission");
+                        XSStyles.helpPopup(showHelp, "Emission", "Emission is the act of a surface emitting light. \n\nThe Emission Map is generally a black and white texture used to mark where emission can happen. Black would cut off all emission, while white would allow full emission in a given area. \n\n You can adjust how bright the emission is, and the color of it, through the color picker. ", "Okay");
+                    EditorGUILayout.EndHorizontal();
+                    GUI.skin = null;
+                    if (emissiveToggle.floatValue == 0)
+                    {
+                        materialEditor.TexturePropertySingleLine(Styles.emissText, emissiveTex, emissiveColor);
+                    }
+                    else
+                    {
+                        material.SetColor("_EmissiveColor", Color.black);
+                    }
+                //-----
 
                 //specular
                     XSStyles.Separator();
@@ -329,6 +354,7 @@ public class XSToonEditor : ShaderGUI
                             GUI.skin = null;
                                 materialEditor.TextureScaleOffsetProperty(specMap);
                                 materialEditor.TexturePropertySingleLine(Styles.specPatternText, specPattern);
+                                materialEditor.TextureScaleOffsetProperty(specPattern);
                                 materialEditor.ShaderProperty(stylizedType, "Specular Type");
                                 materialEditor.ShaderProperty(specStyle, "Specular Style");
                             if (stylizedType.floatValue == 1)
@@ -416,13 +442,6 @@ public class XSToonEditor : ShaderGUI
                     EditorGUILayout.EndHorizontal();
                     if(UseSSS.floatValue == 0)
                     {
-                        // ThicknessMap
-                        // SSSDist
-                        // SSSPow
-                        // SSSIntensity
-                        // invertThickness
-                        // ThicknessMapPower
-
                          materialEditor.TexturePropertySingleLine(Styles.thicknessMap, ThicknessMap, SSSCol);
                          materialEditor.ShaderProperty(invertThickness, "Invert", 3);
                          materialEditor.ShaderProperty(ThicknessMapPower, "Power", 3);
@@ -435,21 +454,7 @@ public class XSToonEditor : ShaderGUI
                     }
                 //-----
 
-                //emission
-                XSStyles.Separator();
-                    EditorGUILayout.BeginHorizontal();
-                    materialEditor.ShaderProperty(emissiveToggle, "Emission");
-                    XSStyles.helpPopup(showHelp, "Emission", "Emission is the act of a surface emitting light. \n\nThe Emission Map is generally a black and white texture used to mark where emission can happen. Black would cut off all emission, while white would allow full emission in a given area. \n\n You can adjust how bright the emission is, and the color of it, through the color picker. ", "Okay");
-                EditorGUILayout.EndHorizontal();
-                GUI.skin = null;
-                if (emissiveToggle.floatValue == 1)
-                {
-                    materialEditor.TexturePropertySingleLine(Styles.emissText, emissiveTex, emissiveColor);
-                }
-                else
-                {
-                    material.SetColor("_EmissiveColor", Color.black);
-                }
+
 
                 GUI.skin = null;
                 if (advMode.floatValue == 1)
