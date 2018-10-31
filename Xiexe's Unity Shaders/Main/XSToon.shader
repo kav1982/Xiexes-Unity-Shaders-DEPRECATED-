@@ -16,7 +16,7 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(PBR,0,Matcap,1,Cubemap,2)] _ReflType ("Reflection Type", Int) = 0
 		[Enum(Add,0,Multiply,1,Subtract,2)] _MatcapStyle ("Matcap Blend Mode", Int) = 1
 		[Enum(Dot,0,Anistropic,1)] _StylizedReflStyle ("StylizedReflStyle", Int) = 0
-		[Enum(Ambient, 0, Ramp, 1)] _RampColor ("Ramp Color", Int) = 1
+		[Enum(Ambient, 0, Ramp, 1, Mixed, 2)] _RampColor ("Ramp Color", Int) = 1
 		[Enum(Smooth,0,Sharp,1)]_SpecularStyle("Specular Style", Int) = 0
 		[Enum(On,0,Off,1)]_UseSSS("Use SSS", Int) = 1
 		[Enum(On,0,Off,1)]_UseSpecular("Use Specular", Int) = 1
@@ -149,7 +149,7 @@ Shader "Xiexe/Toon/XSToon"
 		#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
 		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
-		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON
+		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
 
 
 		ENDCG

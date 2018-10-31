@@ -316,11 +316,11 @@ public class XSToonEditor : ShaderGUI
                             material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
                             material.DisableKeyword("_MIXEDSHADOWCOLOR_ON");
                         }
-                        // if(rampColor.floatValue == 2)
-                        // {
-                        //     material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
-                        //     material.EnableKeyword("_MIXEDSHADOWCOLOR_ON");
-                        // }
+                        if(rampColor.floatValue == 2)
+                        {
+                            material.DisableKeyword("_WORLDSHADOWCOLOR_ON");
+                            material.EnableKeyword("_MIXEDSHADOWCOLOR_ON");
+                        }
                     XSStyles.callGradientEditor();
                 //-----  
 

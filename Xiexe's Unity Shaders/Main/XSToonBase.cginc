@@ -199,11 +199,10 @@
 				//We're sampling ShadeSH9 at 0,0,0 to just get the color.
 				half3 indirectDiffuse = ShadeSH9(float4(0,0,0,1));
 				float3 lightColor = _LightColor0; 
-
-				//Worldspace light direction and simulated light directions
 				float3 worldLightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
+
 				//A way to get dominant light direction from Unity's Spherical Harmonics.
-				float3 simulatedLight = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);//normalize(indirectLightSH.xyzz);//normalize( _SimulatedLightDirection );
+				float3 simulatedLight = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);
 
 				//figure out whether we are in a realtime lighting scnario, or baked, and return it as a 0, or 1 (1 for realtime, 0 for baked)
 				float light_Env = float(any(_WorldSpaceLightPos0.xyz));
@@ -231,20 +230,14 @@
 		//-----
 			
 		//Set up Dot Products
-				//ndl
 				float NdL = DotClamped(worldNormal, float4(light_Dir.xyz, 0));
 				float roundedNdL = ceil(NdL); 
 				float finalNdL = lerp(roundedNdL, NdL, _ShadowType);
-				//vdn and stereo vdn
 				float VdN = DotClamped(viewDir, worldNormal);
 				float SVdN = DotClamped(worldNormal, float4(stereoWorldViewDir, 0.0));
-				//ndh
 				float NdH = DotClamped(worldNormal, halfVector);
-				//rdl
 				float RdV = saturate(dot(reflect(light_Dir, worldNormal), float4(-viewDir, 0)));
-				//tdh
 				float tdh = dot(tangent, halfVector);
-				//bdh
 				float bdh = dot(binorm, halfVector);
 		//-----
 
@@ -253,7 +246,7 @@
 				float3 thicknessMap = pow(tex2D(_ThicknessMap, uv_MainTex), max( 0.01, _ThicknessMapPower));
 				float3 vSSLight = light_Dir + worldNormal * _SSSDist;
 				float vdotSS = pow(saturate(dot(viewDir, -vSSLight)), max(0.2, _SSSPow)) * _SSSIntensity * lerp(1-thicknessMap, thicknessMap, _invertThickness);
-				float3 sss = lerp(1, attenuation, light_Env) * (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
+				float3 sss = (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
 		//-----
 
 		//Do Recieved Shadows and lighting
@@ -267,19 +260,15 @@
 				float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
 				float sharpRim = (step(0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
 				float3 finalRim = lerp(sharpRim, smoothRim, _RimlightType) * _RimColor;
-			
-			//DEPRECATED AS OF 1.5b3
-				//float3 shadowRamp = tex2D( _ShadowRamp, lerp(float2(remappedRamp,remappedRamp), float2(remappedRampBaked,remappedRampBaked), 1-light_Env)).xyz;	
-			//-----
 				
 				float3 shadowRamp = tex2D( _ShadowRamp, remappedRamp.xx).xyz;	
+				float rampLength = length(shadowRamp);
 				float3 finalShadow;
 				float3 finalLight;
 
 				//We default to baked lighting situations, so we use these values
-				// float3 indirectDiffuse = indirectDiffuse;
 				#if _WORLDSHADOWCOLOR_ON
-					finalLight = indirectDiffuse * length(shadowRamp);
+					finalLight = indirectDiffuse * rampLength;
 				#else
 					finalLight = indirectDiffuse * shadowRamp;
 				#endif
@@ -289,7 +278,7 @@
 				if (light_Env == 1) 
 				{
 					#if _WORLDSHADOWCOLOR_ON
-						finalShadow = saturate(((finalNdL * attenuation) - (1-shadowRamp.r)));
+						finalShadow = saturate((rampLength * attenuation) - (1-shadowRamp.r));
 						lightColor = lightColor * (finalShadow);
 						finalLight = lightColor + (indirectDiffuse);
 					#else
@@ -299,14 +288,23 @@
 							shadowRamp = tex2D(_ShadowRamp, float2(remappedRamp,remappedRamp));
 							finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
 							lightColor = lightColor;
-							finalLight = (saturate(indirectDiffuse * 0.25) + lightColor) * finalShadow;
+							#if _MIXEDSHADOWCOLOR_ON
+								finalLight = (indirectDiffuse + lightColor) * finalShadow;
+							#else
+								finalLight = (length(indirectDiffuse) + lightColor) * finalShadow;
+							#endif
 						#else
 							finalShadow = saturate(((finalNdL * (attenuation)) - (1-shadowRamp.r)));
 							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
-							finalLight = lightColor + (indirectDiffuse);
+							#if _MIXEDSHADOWCOLOR_ON
+								finalLight = (lightColor + indirectDiffuse) * finalShadow;
+							#else
+								finalLight = (length(indirectDiffuse) + lightColor) * finalShadow;
+							#endif
 						#endif
 					#endif
 				}
+				//return finalShadow.xyzz;
 
 				float4 MainTex = pow(tex2D( _MainTex, uv_MainTex ), _Saturation);
 				float4 MainColor = MainTex * _Color;
