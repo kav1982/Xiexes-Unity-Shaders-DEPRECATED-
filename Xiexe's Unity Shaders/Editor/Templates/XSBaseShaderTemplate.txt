@@ -130,7 +130,7 @@ Shader !name
 
 		//do all the emission
 			float2 uv_EmissiveTex = i.uv_texcoord * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
-			float4 emissive = ( _EmissiveColor * tex2D( _EmissiveTex, uv_EmissiveTex ));
+			float4 emissive = ( _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER( _EmissiveTex, _MainTex, uv_EmissiveTex ));
 			o.Emission = emissive;
 		}
 

@@ -39,18 +39,19 @@
 			UnityGIInput GIData;
 		};
 
-		sampler2D _MainTex;
-		sampler2D _EmissiveTex;
-		sampler2D _ShadowRamp;
-		sampler2D _Normal;
-		sampler2D _DetailNormal;
-		sampler2D _DetailMask;
-		sampler2D _SpecularMap;
-		sampler2D _SpecularPattern;
+		UNITY_DECLARE_TEX2D(_MainTex);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_EmissiveTex);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_Normal);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_DetailNormal);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_DetailMask);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_SpecularMap);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_SpecularPattern);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_RoughMap);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_OcclusionMap);
+		UNITY_DECLARE_TEX2D_NOSAMPLER(_ThicknessMap);
+
 		sampler2D _MetallicMap;
-		sampler2D _RoughMap;
-		sampler2D _OcclusionMap;
-		sampler2D _ThicknessMap;
+		sampler2D _ShadowRamp;
 		samplerCUBE _BakedCube;
 		float4 _MainTex_ST;
 		float4 _EmissiveTex_ST;
@@ -182,10 +183,10 @@
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
-				float3 normalMap = UnpackNormal(tex2D( _Normal, uv_Normal));
+				float3 normalMap = UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_Normal, _MainTex, uv_Normal));
 					normalMap.xy *= _NormalStrength;
-				float3 detailMask = tex2D(_DetailMask, i.uv_texcoord);
-				float3 detailNormal = UnpackNormal(tex2D(_DetailNormal, uv_DetailNormal));
+				float3 detailMask = UNITY_SAMPLE_TEX2D_SAMPLER(_DetailMask, _MainTex, i.uv_texcoord);
+				float3 detailNormal = UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_DetailNormal, _MainTex, uv_DetailNormal));
 					detailNormal.xy *= _DetailNormalStrength * detailMask.r;
 			//Partial Derivative blending
 				float3 normal = normalize(float3(normalMap.xy*detailNormal.z + detailNormal.xy*normalMap.z, normalMap.z*detailNormal.z));
@@ -212,15 +213,14 @@
 				if( light_Env != 1)
 				{
 					//A way to get dominant light direction from Unity's Spherical Harmonics.
-					float3 simulatedLight = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);
-					light_Dir = simulatedLight;
+					light_Dir = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);
 					
-					 #if !defined(POINT) && !defined(SPOT)
+					//  #if !defined(POINT) && !defined(SPOT)
 						if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
 						{
 							light_Dir = normalize(float4(1, 1, 1, 0));
 						}
-					 #endif
+					//  #endif
 				}
 
 				half3 halfVector = normalize(light_Dir + viewDir);
@@ -240,7 +240,7 @@
 
 		//Do Subsurface Scattering
 			//SSS method lifted from GDC 2011 conference by Colin Barre-Bresebois & Marc Bouchard and modified by me
-				float3 thicknessMap = pow(tex2D(_ThicknessMap, uv_MainTex), max( 0.01, _ThicknessMapPower));
+				float3 thicknessMap = pow(UNITY_SAMPLE_TEX2D_SAMPLER(_ThicknessMap, _MainTex, uv_MainTex), max( 0.01, _ThicknessMapPower));
 				float3 vSSLight = light_Dir + worldNormal * _SSSDist;
 				float vdotSS = pow(saturate(dot(viewDir, -vSSLight)), max(0.2, _SSSPow)) * _SSSIntensity * lerp(1-thicknessMap, thicknessMap, _invertThickness);
 				float3 sss;
@@ -253,7 +253,7 @@
 
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
-				float3 occlusionMap = pow(tex2D(_OcclusionMap, i.uv_texcoord), _OcclusionStrength);
+				float3 occlusionMap = pow(UNITY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, _MainTex,i.uv_texcoord), _OcclusionStrength);
 				float remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
 				// #if DIRECTIONAL
 				// 	remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
@@ -271,7 +271,7 @@
 				float indirectAvg = Luminance(indirectColor);
 				float3 finalShadow;
 				float3 finalLight;
-
+				
 				//Checked if we're in baked or not and use the correct values for shadowing based on that. 
 				if (light_Env != 0) 
 				{
@@ -291,8 +291,8 @@
 								finalLight = (indirectAvg + lightColor) * finalShadow;
 							#endif
 						#else
-							finalShadow = saturate(((shadowRamp * attenuation) - (1-shadowRamp.r)));
-							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
+							finalShadow = saturate(((shadowRamp * attenuation * 2) - (1-shadowRamp.r)));
+							lightColor = lightColor * (finalShadow + shadowRamp.rgb);
 							float finalLength = Luminance(finalShadow);
 							#if _MIXEDSHADOWCOLOR_ON
 								finalLight = (lightColor + indirectColor) * finalLength;
@@ -314,12 +314,12 @@
 					#endif
 				}
 
-				float4 MainTex = pow(tex2D( _MainTex, uv_MainTex ), _Saturation);
+				float4 MainTex = pow(UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex ), _Saturation);
 				float4 MainColor = MainTex * _Color;
 			
 			//Specular
-				float4 specularMap = tex2D(_SpecularMap, uv_Specular);
-				float specularPatternTex = tex2D(_SpecularPattern, (((UVSet - float2( 0.5,0.5)) * uv_SpecularPattern) + float2(0.5,0.5))).r;
+				float4 specularMap = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularMap, _MainTex, uv_Specular);
+				float specularPatternTex = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularPattern, _MainTex,(((UVSet - float2( 0.5,0.5)) * uv_SpecularPattern) + float2(0.5,0.5))).r;
 				float3 specularHighlight = float3(0,0,0);
 					#ifdef _ANISTROPIC_ON
 						//Anistropic
@@ -352,8 +352,8 @@
 
 			//PBR
 				#ifdef _PBRREFL_ON
-					metalMap = (tex2D(_MetallicMap, uv_MainTex) * _Metallic);
-					roughMap = tex2D(_RoughMap, uv_MainTex);
+					metalMap = tex2D(_MetallicMap, uv_MainTex) * _Metallic;
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
 					float roughness = saturate((_ReflSmoothness * (roughMap.r)));
 					float4 envSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectedDir, roughness * 6);
 					reflection = DecodeHDR(envSample, unity_SpecCube0_HDR);
@@ -369,7 +369,7 @@
 			//Matcap	
 				//Note: This matcap is intended for VR. 
 				#ifdef _MATCAP_ON
-					roughMap = tex2D(_RoughMap, uv_MainTex);
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
 					float3 sampleY = float3(0,1,0);
 					float3 VcrossY = cross(viewDir, sampleY);
 					float3 VCYcrossV = cross(VcrossY, viewDir);
@@ -382,7 +382,7 @@
 
 			//Cubemap Baked
 				#ifdef _MATCAP_CUBEMAP_ON
-					roughMap = tex2D(_RoughMap, uv_MainTex);
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
 					reflection = texCUBElod(_BakedCube, float4(reflectedDir, _ReflSmoothness * 6));
 				#endif
 			//--	

@@ -134,20 +134,20 @@ Shader "Xiexe/Toon/XSToon"
 			
 			#ifdef _CUTOUT_ON
 			float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
-			float4 MainTex194 = ( tex2D( _MainTex, uv_MainTex ));
+			float4 MainTex194 = ( UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex ));
 			clip(MainTex194.a - _Cutoff);
 			#endif
 		
 
 		//do all the emission
 			float2 uv_EmissiveTex = i.uv_texcoord * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
-			float4 emissive = ( _EmissiveColor * tex2D( _EmissiveTex, uv_EmissiveTex ));
+			float4 emissive = ( _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER( _EmissiveTex, _MainTex, uv_EmissiveTex ));
 			o.Emission = emissive;
 		}
 
 		ENDCG
 		CGPROGRAM
-		#pragma surface surf StandardCustomLighting keepalpha addshadow fullforwardshadows nometa
+		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
 		#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
 		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
