@@ -198,37 +198,36 @@
 
 		//Setup Direct and Indirect Light
 				//We're sampling ShadeSH9 at 0,0,0 to just get the color.
-				half3 indirectDiffuse = ShadeSH9(float4(0,0,0,1));
+				half3 indirectColor = ShadeSH9(float4(0,0,0,1));
 				float3 lightColor = _LightColor0; 
-				float3 worldLightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
 
-				//A way to get dominant light direction from Unity's Spherical Harmonics.
-				float3 simulatedLight = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);
 
 				//figure out whether we are in a realtime lighting scnario, or baked, and return it as a 0, or 1 (1 for realtime, 0 for baked)
 				float light_Env = float(any(_WorldSpaceLightPos0.xyz));
 
-				//we use the simulated light direction if we're in a baked scenario
-				float4 light_Dir = simulatedLight.xyzz;
+				//default to realtime, and switch to baked direction if needed
+				//we also have a super fallback in case of no direction.
+				float3 light_Dir = normalize(UnityWorldSpaceLightDir(i.worldPos));
 
-				//otherwise, we use the actual light direction
-				if( light_Env == 1)
+				if( light_Env != 1)
 				{
-					light_Dir = float4( worldLightDir , 0.0 );
-				}
-				else
-				{
-					if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
-					{
-						light_Dir = normalize(float4(1, 1, 1, 0));
-					}
+					//A way to get dominant light direction from Unity's Spherical Harmonics.
+					float3 simulatedLight = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);
+					light_Dir = simulatedLight;
+					
+					 #if !defined(POINT) && !defined(SPOT)
+						if(length(unity_SHAr.xyz*unity_SHAr.w + unity_SHAg.xyz*unity_SHAg.w + unity_SHAb.xyz*unity_SHAb.w) == 0)
+						{
+							light_Dir = normalize(float4(1, 1, 1, 0));
+						}
+					 #endif
 				}
 
 				half3 halfVector = normalize(light_Dir + viewDir);
 		//-----
 			
 		//Set up Dot Products
-				float NdL = DotClamped(worldNormal, float4(light_Dir.xyz, 0));
+				float NdL = dot(worldNormal, float4(light_Dir.xyz, 0));
 				float roundedNdL = ceil(NdL); 
 				float finalNdL = lerp(roundedNdL, NdL, _ShadowType);
 				float VdN = DotClamped(viewDir, worldNormal);
@@ -246,9 +245,9 @@
 				float vdotSS = pow(saturate(dot(viewDir, -vSSLight)), max(0.2, _SSSPow)) * _SSSIntensity * lerp(1-thicknessMap, thicknessMap, _invertThickness);
 				float3 sss;
 				#if defined(POINT) || defined(SPOT)
-					sss = attenuation * (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
+					sss = attenuation * (vdotSS * _SSSCol) * (lightColor + indirectColor);
 				#else
-					sss = (vdotSS * _SSSCol) * (lightColor + indirectDiffuse);
+					sss = (vdotSS * _SSSCol) * (lightColor + indirectColor);
 				#endif
 		//-----
 
@@ -268,31 +267,18 @@
 				float3 finalRim = lerp(sharpRim, smoothRim, _RimlightType) * _RimColor;
 				
 				float3 shadowRamp = tex2D( _ShadowRamp, remappedRamp.xx).xyz;	
-				float rampAvg = length(shadowRamp);
-				float indirectAvg = length(indirectDiffuse);
+				float rampAvg = Luminance(shadowRamp);
+				float indirectAvg = Luminance(indirectColor);
 				float3 finalShadow;
 				float3 finalLight;
-				
-				//return remappedRamp * attenuation;
 
-				//We default to baked lighting situations, so we use these values
-				#if _WORLDSHADOWCOLOR_ON
-					finalLight = indirectDiffuse * rampAvg;
-				#else
-					#if _MIXEDSHADOWCOLOR_ON
-						finalLight = indirectDiffuse * shadowRamp;
-					#else
-						finalLight = indirectAvg * shadowRamp;
-					#endif
-				#endif
-
-				//If our lighting environment matches the number for realtime lighting, use these numbers instead
+				//Checked if we're in baked or not and use the correct values for shadowing based on that. 
 				if (light_Env != 0) 
 				{
 					#if _WORLDSHADOWCOLOR_ON
 						finalShadow = saturate((rampAvg * attenuation) - (1-shadowRamp.r));
-						lightColor = lightColor * (finalShadow);
-						finalLight = lightColor + (indirectDiffuse);
+						lightColor = lightColor * finalShadow;
+						finalLight = lightColor + indirectColor;
 					#else
 						float3 rampBaseColor = tex2D(_ShadowRamp, float2(_RampBaseAnchor,_RampBaseAnchor));
 						#if defined(DIRECTIONAL)
@@ -300,7 +286,7 @@
 							finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
 							lightColor = lightColor;
 							#if _MIXEDSHADOWCOLOR_ON
-								finalLight = (indirectDiffuse + lightColor) * finalShadow;
+								finalLight = (indirectColor + lightColor) * finalShadow;
 							#else
 								finalLight = (indirectAvg + lightColor) * finalShadow;
 							#endif
@@ -309,10 +295,21 @@
 							lightColor = lightColor * (finalShadow + (shadowRamp.rgb * attenuation));
 							float finalLength = Luminance(finalShadow);
 							#if _MIXEDSHADOWCOLOR_ON
-								finalLight = (lightColor + indirectDiffuse) * finalLength;
+								finalLight = (lightColor + indirectColor) * finalLength;
 							#else
 								finalLight = (indirectAvg + lightColor) * finalLength;
 							#endif
+						#endif
+					#endif
+				}
+				else{
+					#if _WORLDSHADOWCOLOR_ON
+							finalLight = indirectColor * rampAvg;
+					#else
+						#if _MIXEDSHADOWCOLOR_ON
+							finalLight = indirectColor * shadowRamp;
+						#else
+							finalLight = indirectAvg * shadowRamp;
 						#endif
 					#endif
 				}
