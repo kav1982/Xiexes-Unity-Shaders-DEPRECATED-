@@ -449,9 +449,10 @@ public class XSToonEditor : ShaderGUI
                     EditorGUILayout.EndHorizontal();
                     if(UseSSS.floatValue == 0)
                     {
-                         materialEditor.TexturePropertySingleLine(Styles.thicknessMap, ThicknessMap, SSSCol);
+                         materialEditor.TexturePropertySingleLine(Styles.thicknessMap, ThicknessMap);
                          materialEditor.ShaderProperty(invertThickness, "Invert", 3);
                          materialEditor.ShaderProperty(ThicknessMapPower, "Power", 3);
+                         materialEditor.ShaderProperty(SSSCol, "Subsurface Color", 2);
                          materialEditor.ShaderProperty(SSSDist, "Displacement",2);
                          materialEditor.ShaderProperty(SSSPow, "Sharpness",2);
                          materialEditor.ShaderProperty(SSSIntensity, "Intensity",2);

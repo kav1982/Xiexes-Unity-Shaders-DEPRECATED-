@@ -147,7 +147,7 @@ Shader "Xiexe/Toon/XSToon"
 
 		ENDCG
 		CGPROGRAM
-		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
+		#pragma surface surf StandardCustomLighting keepalpha addshadow fullforwardshadows nometa
 		#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
 		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
