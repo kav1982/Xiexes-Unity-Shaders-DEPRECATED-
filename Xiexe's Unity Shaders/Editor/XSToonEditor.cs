@@ -267,7 +267,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
                         materialEditor.TexturePropertySingleLine(Styles.MainTexText, mainTex, tint);
-                        XSStyles.helpPopup(showHelp, "Main Texture", "The Main Texture - provides color, and Alpha in the case of Transparent Fade.", "Okay");
+                        XSStyles.helpPopup(showHelp, "Main Texture Slots", "The Main Texture - provides color, and Alpha in the case of Transparency. \n\n Occlusion is used to have areas always be shadowed. This is done with a black to white texture.", "Okay");
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                         materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
@@ -293,7 +293,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                         EditorGUILayout.BeginHorizontal();
                         materialEditor.TexturePropertySingleLine(Styles.normalText, normal, normalStrength);
-                    XSStyles.helpPopup(showHelp, "Normal Map", "The normal map - controls how light and shadow distorts on the surface of an object. \n\n Usually used for small micro details, such as scratches on a metal surface.", "Okay");
+                    XSStyles.helpPopup(showHelp, "Normal Map", "The normal map - controls how light and shadow distorts on the surface of an object. \n\n Detail Normals can be tiled for small micro details, such as scratches on a metal surface.", "Okay");
                     EditorGUILayout.EndHorizontal();
                         materialEditor.TextureScaleOffsetProperty(normal);
                         materialEditor.TexturePropertySingleLine(Styles.detailNormal, detailNormal, detailNormalStrength);
@@ -387,7 +387,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                         EditorGUILayout.BeginHorizontal();
                         materialEditor.ShaderProperty(useRefl, "Reflections");
-                        XSStyles.helpPopup(showHelp, "Reflections", "This panel is all about reflections. XSToon supports many styles of reflections. \n\n-PBR \n This is what you think about when you think reflections - these will sample the reflection probes in a room and reflect them back off of the surface. \n\n-Matcap \n This takes a SphereMap texture and maps it based on your viewing direction to the surface, to simulate reflections. \n\n -Matcap Cubemap \n This is actually just a cubemap reflection, but you can plug any cubemap in and have it reflect, as if you were in that environment. \n\n -Stylized \n Stylized has two options, Dot, and Anistropic. Dot will reflect light in a sharp dot, similar to what you'd see in anime. Anistropic will reflect light in a horizontal line across the object, good for hair.", "Okay");
+                        XSStyles.helpPopup(showHelp, "Reflections", "This panel is all about reflections. XSToon supports many styles of reflections. \n\n-PBR \n This is what you think about when you think reflections - these will sample the reflection probes in a room and reflect them back off of the surface. \n\n-Matcap \n This takes a SphereMap texture and maps it based on your viewing direction to the surface, to simulate reflections. \n\n -Cubemap \n This is just a cubemap reflection, you can plug any cubemap in and have it reflect, as if you were in that environment.", "Okay");
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                         if (useRefl.floatValue == 0)
@@ -481,6 +481,11 @@ public class XSToonEditor : ShaderGUI
                     materialEditor.ShaderProperty(zwrite, zwrite.displayName, 2);
                     materialEditor.ShaderProperty(uv2, "UV2 for Normal/Spec", 2);
                     materialEditor.ShaderProperty(RampBaseAnchor, "Ramp Anchor", 2);
+                    
+                    // Reset ZWrite/ZTest
+                    XSStyles.ResetAdv(material);
+                    XSStyles.ResetAdvAll(material);
+
                 }
 
             }

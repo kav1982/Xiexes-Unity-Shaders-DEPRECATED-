@@ -6,7 +6,7 @@ using System.IO;
 [InitializeOnLoad]
 public class XSStyles : MonoBehaviour
 {
-    public static string ver = "1.5 BETA 5";
+    public static string ver = "1.5";
     public static string uiPath;
     private static GUISkin skin;
 
@@ -30,7 +30,7 @@ public class XSStyles : MonoBehaviour
     {
         public static GUIContent version = new GUIContent("XSToon v" + ver, "The currently installed version of XSToon.");
     }
-
+            
     // Labels
     public static void DoHeader(GUIContent HeaderText)
     {
@@ -90,6 +90,44 @@ public class XSStyles : MonoBehaviour
         {
             XSGradientEditor.Init();
         }
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+    }
+
+    static public void ResetAdv(Material material)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUI.skin = null;
+        if (GUILayout.Button("Reset ZTest / ZWrite", GUILayout.Width(200), GUILayout.Height(20)))
+        {
+            material.SetFloat("_ZTest", 4);
+            material.SetFloat("_ZWrite", 1);
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+    }
+
+    
+    static public void ResetAdvAll(Material material)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUI.skin = null;
+        if (GUILayout.Button("Reset All Advanced", GUILayout.Width(200), GUILayout.Height(20)))
+        {
+            material.SetFloat("_colormask", 15);
+            material.SetFloat("_Stencil", 0);
+            material.SetFloat("_StencilComp", 0);
+            material.SetFloat("_StencilOp", 0);
+            material.SetFloat("_StencilFail", 0);
+            material.SetFloat("_StencilZFail", 0);
+            material.SetFloat("_ZWrite", 1);
+            material.SetFloat("_ZTest", 4);
+            material.SetFloat("_UseUV2forNormalsSpecular", 0);
+            material.SetFloat("_RampBaseAnchor", 0.5f);
+        }
+        GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
     }
 
