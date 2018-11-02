@@ -59,8 +59,8 @@ public class XSShaderGenerator : EditorWindow
     private static string cutoutPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
     private static string transparentPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
     private static string transparentShadowedPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
-    private static string transparentFadePragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
-    private static string transparentFadeShadowedPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa alpha:fade";
+    private static string transparentFadePragma = "	#pragma surface surf StandardCustomLighting keepalpha nometa alpha:fade";
+    private static string transparentFadeShadowedPragma = "	#pragma surface surf StandardCustomLighting keepalpha nometa alpha:fade";
     private static string transparentDitheredPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
 
     //Strings for Blend
@@ -414,10 +414,34 @@ public class XSShaderGenerator : EditorWindow
         }
         writer.Close();
 
-        int stringIndex = Random.Range(0, 6);
+        
 
-        string[] loadingStrings = {"Reticulating Splines...", "Summoning the shader overlords...", "Abra, kadabra.. How does this go again?",
-                                    "Stay awhile, and listen...", "Engaging Warpdrive...", "What is this, a shader for ants?"};
+        string[] loadingStrings = { "Reticulating Splines...", 
+                                    "Summoning the shader overlords...", 
+                                    "Abra, kadabra.. How does this go again?",
+                                    "Stay awhile, and listen...", 
+                                    "Engaging Warpdrive...", 
+                                    "What is this, a shader for ants?", 
+                                    "Raymarching some weed...",
+                                    "Benji is a thot.",
+                                    "Researching some frog facts...",
+                                    "One month.",
+                                    "Building Terrain...",
+                                    "Generating Navmesh...",
+                                    "Generating Lightmaps...",
+                                    "Listening to TCL lecture...",
+                                    "Taking forever to compile...",
+                                    "Baking Reflection Probes...",
+                                    "Making the perfect fresnel...",
+                                    "Doing a little jig...",
+                                    "Computing Geometry shaders...",
+                                    "Building Compute shaders...",
+                                    "Are you even reading these?",
+                                    "Future Proofing...",
+                                    "OwO"
+                                    };
+        
+        int stringIndex = Random.Range(0, loadingStrings.Length);
 
         if (progress < queued.Length)
         {

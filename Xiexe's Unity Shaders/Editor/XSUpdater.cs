@@ -3,7 +3,6 @@ using UnityEngine.Networking;
 using UnityEditor;
 using System.Collections;
 using System.IO;
-using LitJson;
 
 public class XSUpdater : EditorWindow
 {
@@ -39,7 +38,7 @@ public class XSUpdater : EditorWindow
 
         //
         XSStyles.Separator();
-        XSStyles.doLabel("Thank you to my patreon supporters, and the people who have helped me along the way, you guys are great! \n\n Patrons as of v1.4: \n - Wandering Youth \n - Your name could be here!");
+        XSStyles.doLabel("Thank you to my patreon supporters, and the people who have helped me along the way, you guys are great! \n\n Patrons as of " + XSStyles.ver + "\n - Wandering Youth \n - SaltQueen \n - Your name could be here!");
 
         XSStyles.Separator();
         EditorGUILayout.BeginHorizontal();
@@ -79,7 +78,7 @@ public class XSUpdater : EditorWindow
 
 
         bool option = EditorUtility.DisplayDialog("XSToon: Updater",
-                                    "You are on version: \nv" + XSStyles.ver + "\n\nThe latest version is: \n" + git.tag_name + "\n\n" + git.body + "\n\nWould you like to update?",
+                                    "You are on version: \nv" + XSStyles.ver + "\n\nThe latest version is: \n" + git.tag_name + "\n\n You can view the changelog either on my Discord, or at the Github page for this release." + "\n\nWould you like to update?",
                                     "Download", "Cancel");
 
         switch (option)
