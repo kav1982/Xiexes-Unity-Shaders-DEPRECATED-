@@ -116,7 +116,7 @@ Shader !name
 
 		CGINCLUDE
 		!definerendermode
-		#include "XSToonBase.cginc"
+		#include "CGInc/XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
 		{
@@ -144,6 +144,23 @@ Shader !name
 		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
 		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
 		ENDCG
+
+		
+		Pass
+		{
+			Name "ShadowCaster"
+			Tags{ "LightMode" = "ShadowCaster" }
+			ZWrite On
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma target 3.0
+			#pragma multi_compile_shadowcaster
+			#pragma multi_compile UNITY_PASS_SHADOWCASTER
+			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
+			#include "CGInc/XSShadowCaster.cginc"
+			ENDCG
+		}
 	}
     !fallback
 	CustomEditor "XSToonEditor"

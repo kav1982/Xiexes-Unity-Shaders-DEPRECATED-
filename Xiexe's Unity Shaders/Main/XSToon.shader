@@ -119,7 +119,7 @@ Shader "Xiexe/Toon/XSToon"
 		
 		CGINCLUDE
 		#define opaque
-		#include "XSToonBase.cginc"
+		#include "CGInc/XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
 		{
@@ -130,14 +130,6 @@ Shader "Xiexe/Toon/XSToon"
 		{
 			o.SurfInput = i;
 			o.Normal = float3(0,0,1);
-		//we also need to put the cutout stuff here, otherwise emission breaks with cutout, unfortunetly it costs an extra texture sample if you're using cutout
-			
-			#ifdef _CUTOUT_ON
-			float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
-			float4 MainTex194 = ( UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex ));
-			clip(MainTex194.a - _Cutoff);
-			#endif
-		
 
 		//do all the emission
 			float2 uv_EmissiveTex = i.uv_texcoord * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
@@ -155,6 +147,22 @@ Shader "Xiexe/Toon/XSToon"
 
 
 		ENDCG
+
+		Pass
+		{
+			Name "ShadowCaster"
+			Tags{ "LightMode" = "ShadowCaster" }
+			ZWrite On
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma target 3.0
+			#pragma multi_compile_shadowcaster
+			#pragma multi_compile UNITY_PASS_SHADOWCASTER
+			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
+			#include "CGInc/XSShadowCaster.cginc"
+			ENDCG
+		}
 	}
 	Fallback "Diffuse"
 	CustomEditor "XSToonEditor"
