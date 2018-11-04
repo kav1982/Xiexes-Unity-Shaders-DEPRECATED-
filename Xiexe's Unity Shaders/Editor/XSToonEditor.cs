@@ -138,6 +138,7 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty UseUV2Emiss;
     MaterialProperty EmissScaleWithLight;
     MaterialProperty EmissTintToColor;
+    MaterialProperty EmissionPower;
 
     public Texture ramp;
 
@@ -205,6 +206,7 @@ public class XSToonEditor : ShaderGUI
             UseUV2Emiss = ShaderGUI.FindProperty("_EmissUv2", props);
             EmissScaleWithLight = ShaderGUI.FindProperty("_ScaleWithLight", props);
             EmissTintToColor = ShaderGUI.FindProperty("_EmissTintToColor", props);
+            EmissionPower = ShaderGUI.FindProperty("_EmissionPower", props);
 
 
             //advanced options
@@ -348,6 +350,9 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.ShaderProperty(EmissTintToColor, "Tint To Diffuse");
                         materialEditor.ShaderProperty(UseUV2Emiss, "UV Channel");
                         materialEditor.ShaderProperty(EmissScaleWithLight, "Scale With Light");
+                        if(EmissScaleWithLight.floatValue == 0){
+                            materialEditor.ShaderProperty(EmissionPower, "Scale", 2);
+                        }
                     }
                     else
                     {

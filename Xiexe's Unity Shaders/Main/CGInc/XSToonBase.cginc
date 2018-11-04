@@ -109,6 +109,7 @@
 		float _ScaleWithLight;
 		float _EmissUv2;
 		float _EmissTintToColor;
+		float _EmissionPower;
 
 	//Custom Helper Functions		
 		float4x4 tMatrixFunc(float3 x, float3 y, float3 z)
@@ -445,7 +446,7 @@
 
 			//Emission
 				float4 emissive = _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER(_EmissiveTex, _MainTex, UVSetEmission) * lerp(MainColor, 1, _EmissTintToColor);
-				float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * 1.3).z;
+				float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * _EmissionPower).z;
 				float scaleWithLight = _ScaleWithLight >= 1 ? 1 : saturate(pow(1-(emissPow), 2.2));
 				emissive *= scaleWithLight;
 			//--
