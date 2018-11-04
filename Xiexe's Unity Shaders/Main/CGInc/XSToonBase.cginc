@@ -106,6 +106,9 @@
 		float _invertThickness;
 		float _ThicknessMapPower;
 		float _RampBaseAnchor;
+		float _ScaleWithLight;
+		float _EmissUv2;
+		float _EmissTintToColor;
 
 	//Custom Helper Functions		
 		float4x4 tMatrixFunc(float3 x, float3 y, float3 z)
@@ -143,6 +146,18 @@
 			return dither[r] / 64;
 		}
 
+		//rgbtoHSV
+		float3 rgb2hsv(float3 c)
+		{
+			float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+			float4 p = lerp(float4(c.bg, K.wz), float4(c.gb, K.xy), step(c.b, c.g));
+			float4 q = lerp(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
+
+			float d = q.x - min(q.w, q.y);
+			float e = 1.0e-10;
+			return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+		}
+
 		// From HDRenderPipeline
 		float D_GGXAnisotropic(float TdotH, float BdotH, float NdotH, float roughnessT, float roughnessB)
 		{
@@ -168,18 +183,18 @@
 					float attenuation = max( max( attenuationRGB.r, attenuationRGB.g ), attenuationRGB.b );
 				#endif
 		//-----
-			//debug atten
-				// return attenuation;
 
 		//Set up UVs
 				float2 texcoord1 = i.uv_texcoord;
 				float2 texcoord2 = i.uv2_texcoord2;
+				float2 UVSetEmission = lerp(texcoord1, texcoord2, _EmissUv2);
 				float2 UVSet = lerp(texcoord1,texcoord2,_UseUV2forNormalsSpecular);
 				float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
 				float2 uv_Normal = UVSet * _Normal_ST.xy + _Normal_ST.zw;
 				float2 uv_DetailNormal = UVSet * _DetailNormal_ST.xy + _DetailNormal_ST.zw;
 				float2 uv_Specular = UVSet * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
 				float2 uv_SpecularPattern = UVSet * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
+				float2 uv_EmissiveTex = i.uv2_texcoord2;// * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
@@ -253,8 +268,8 @@
 
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
-				float3 occlusionMap = pow(UNITY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, _MainTex,i.uv_texcoord), _OcclusionStrength);
-				float remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
+				float3 occlusionMap = UNITY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, _MainTex,i.uv_texcoord) ;
+				float remappedRamp = (NdL * 0.5 + 0.5) * (occlusionMap.x + ((1-occlusionMap.x) * (1-_OcclusionStrength)));
 				// #if DIRECTIONAL
 				// 	remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
 				// #else
@@ -428,7 +443,14 @@
 				#endif
 			//--
 
-			c.rgb = finalColor * (finalLight + sss.xyz + finalAddedLight);
+			//Emission
+				float4 emissive = _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER(_EmissiveTex, _MainTex, UVSetEmission) * lerp(MainColor, 1, _EmissTintToColor);
+				float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * 1.3).z;
+				float scaleWithLight = _ScaleWithLight >= 1 ? 1 : saturate(pow(1-(emissPow), 2.2));
+				emissive *= scaleWithLight;
+			//--
+
+			c.rgb = finalColor * (finalLight + sss.xyz + finalAddedLight) + emissive;
 		//-----
 		
 		//Do Alpha Modes

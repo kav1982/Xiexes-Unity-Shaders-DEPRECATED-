@@ -21,6 +21,9 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(On,0,Off,1)]_UseSSS("Use SSS", Int) = 1
 		[Enum(On,0,Off,1)]_UseSpecular("Use Specular", Int) = 1
 		[Enum(On,0,Off,1)] _Emissive("Emissive?", Int) = 1
+		[Enum(Yes,0, No,1)] _ScaleWithLight("ScaleEmissWithLight", Int) = 1
+		[Enum(UV1,0, UV2,1)] _EmissUv2("Emiss UV", Int) = 0
+		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
 		
 	//Textures
 		_MainTex("Main Tex", 2D) = "white" {}
@@ -130,11 +133,6 @@ Shader "Xiexe/Toon/XSToon"
 		{
 			o.SurfInput = i;
 			o.Normal = float3(0,0,1);
-
-		//do all the emission
-			float2 uv_EmissiveTex = i.uv_texcoord * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
-			float4 emissive = ( _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER( _EmissiveTex, _MainTex, uv_EmissiveTex ));
-			o.Emission = emissive;
 		}
 
 		ENDCG
