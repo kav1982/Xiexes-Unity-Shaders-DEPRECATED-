@@ -5,7 +5,7 @@ Shader !name
 		[Toggle]_UseUV2forNormalsSpecular("Use UV2 for Normals/Specular", Float) = 0
 
 	//Enums for all options
-		[Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
+[Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
 		[Enum(Horizontal,0,Vertical,1)] _RampDir ("Shadow Ramp Direction", Int) = 1
 		[Enum(Sharp,0,Smooth,1,Off,2)] _RimlightType("Rimlight Type", Int) = 0
 		[Enum(On,0,Off,1)] _UseReflections ("Use Reflections", Int) = 1
@@ -18,6 +18,9 @@ Shader !name
 		[Enum(On,0,Off,1)]_UseSSS("Use SSS", Int) = 1
 		[Enum(On,0,Off,1)]_UseSpecular("Use Specular", Int) = 1
 		[Enum(On,0,Off,1)] _Emissive("Emissive?", Int) = 1
+		[Enum(Yes,0, No,1)] _ScaleWithLight("ScaleEmissWithLight", Int) = 1
+		[Enum(UV1,0, UV2,1)] _EmissUv2("Emiss UV", Int) = 0
+		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
 		
 	//Textures
 		_MainTex("Main Tex", 2D) = "white" {}
@@ -91,6 +94,7 @@ Shader !name
 		[Enum(None,0,Alpha,1,Red,8,Green,4,Blue,2,RGB,14,RGBA,15)] _colormask("Color Mask", Int) = 15 
 
 		_RampBaseAnchor("RampBaseAnchor", Range(0,1)) = 0.5
+		_EmissionPower("", Range(1,2)) = 1
 	}
 
 	SubShader
@@ -116,7 +120,7 @@ Shader !name
 
 		CGINCLUDE
 		!definerendermode
-		#include "XSToonBase.cginc"
+		#include "CGInc/XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
 		{
@@ -127,11 +131,6 @@ Shader !name
 		{
 			o.SurfInput = i;
 			o.Normal = float3(0,0,1);
-
-		//do all the emission
-			float2 uv_EmissiveTex = i.uv_texcoord * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
-			float4 emissive = ( _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER( _EmissiveTex, _MainTex, uv_EmissiveTex ));
-			o.Emission = emissive;
 		}
 
 		ENDCG
@@ -144,6 +143,23 @@ Shader !name
 		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
 		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
 		ENDCG
+
+		
+		Pass
+		{
+			Name "ShadowCaster"
+			Tags{ "LightMode" = "ShadowCaster" }
+			ZWrite On
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma target 3.0
+			#pragma multi_compile_shadowcaster
+			#pragma multi_compile UNITY_PASS_SHADOWCASTER
+			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
+			#include "CGInc/XSShadowCaster.cginc"
+			ENDCG
+		}
 	}
     !fallback
 	CustomEditor "XSToonEditor"

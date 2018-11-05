@@ -135,8 +135,10 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty UseSSS;
     MaterialProperty UseSpecular;
 	MaterialProperty RampBaseAnchor;
-
-    
+    MaterialProperty UseUV2Emiss;
+    MaterialProperty EmissScaleWithLight;
+    MaterialProperty EmissTintToColor;
+    MaterialProperty EmissionPower;
 
     public Texture ramp;
 
@@ -201,6 +203,10 @@ public class XSToonEditor : ShaderGUI
             ThicknessMapPower = ShaderGUI.FindProperty("_ThicknessMapPower", props);
             UseSSS = ShaderGUI.FindProperty("_UseSSS", props); 
             UseSpecular = ShaderGUI.FindProperty("_UseSpecular", props);
+            UseUV2Emiss = ShaderGUI.FindProperty("_EmissUv2", props);
+            EmissScaleWithLight = ShaderGUI.FindProperty("_ScaleWithLight", props);
+            EmissTintToColor = ShaderGUI.FindProperty("_EmissTintToColor", props);
+            EmissionPower = ShaderGUI.FindProperty("_EmissionPower", props);
 
 
             //advanced options
@@ -341,6 +347,12 @@ public class XSToonEditor : ShaderGUI
                     if (emissiveToggle.floatValue == 0)
                     {
                         materialEditor.TexturePropertySingleLine(Styles.emissText, emissiveTex, emissiveColor);
+                        materialEditor.ShaderProperty(EmissTintToColor, "Tint To Diffuse");
+                        materialEditor.ShaderProperty(UseUV2Emiss, "UV Channel");
+                        materialEditor.ShaderProperty(EmissScaleWithLight, "Scale With Light");
+                        if(EmissScaleWithLight.floatValue == 0){
+                            materialEditor.ShaderProperty(EmissionPower, "Scale", 2);
+                        }
                     }
                     else
                     {
