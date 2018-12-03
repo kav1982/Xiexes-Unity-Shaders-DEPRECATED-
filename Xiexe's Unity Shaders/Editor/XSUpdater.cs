@@ -20,7 +20,7 @@ public class XSUpdater : EditorWindow
 
 
     static int tab = 0;
-    static string url = "https://api.github.com/repos/Xiexe/Xiexes-Unity-Shaders/releases/latest"+"?client_id=a7ee3570d5d6164236c2&client_secret=dcb22f039d112d6b3bbbc7ecd1d84cd96b9a4305";
+    static string url = "https://api.github.com/repos/Xiexe/Xiexes-Unity-Shaders/releases/latest";
     static string docsURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE";
     static UnityWebRequest www;
 
