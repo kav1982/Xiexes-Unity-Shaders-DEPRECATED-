@@ -6,7 +6,7 @@ using System.IO;
 [InitializeOnLoad]
 public class XSStyles : MonoBehaviour
 {
-    public static string ver = "1.5";
+    public static string ver = "1.6 BETA";
     public static string uiPath;
     private static GUISkin skin;
 
@@ -52,12 +52,21 @@ public class XSStyles : MonoBehaviour
         });
     }
 
+    public static void doLabelLeft(string text)
+    {
+        GUILayout.Label(text, new GUIStyle(EditorStyles.label)
+        {
+            alignment = TextAnchor.MiddleLeft,
+            wordWrap = true,
+            fontSize = 12
+        });
+    }
 
     public static void doLabelSmall(string text)
     {
         GUILayout.Label(text, new GUIStyle(EditorStyles.label)
         {
-            alignment = TextAnchor.LowerLeft,
+            alignment = TextAnchor.MiddleLeft,
             wordWrap = true,
             fontSize = 10
         });
@@ -131,6 +140,19 @@ public class XSStyles : MonoBehaviour
         GUILayout.EndHorizontal();
     }
 
+    static public void CallResetAdv(Material material)
+    {
+            material.SetFloat("_colormask", 15);
+            material.SetFloat("_Stencil", 0);
+            material.SetFloat("_StencilComp", 0);
+            material.SetFloat("_StencilOp", 0);
+            material.SetFloat("_StencilFail", 0);
+            material.SetFloat("_StencilZFail", 0);
+            material.SetFloat("_ZWrite", 1);
+            material.SetFloat("_ZTest", 4);
+            material.SetFloat("_UseUV2forNormalsSpecular", 0);
+            material.SetFloat("_RampBaseAnchor", 0.5f);
+    }
     //------
 
     //Help Box
@@ -146,6 +168,14 @@ public class XSStyles : MonoBehaviour
         GUILine(new Color(.3f, .3f, .3f), 1);
         GUILine(new Color(.9f, .9f, .9f), 1);
         GUILayout.Space(4);
+    }
+
+    static public void SeparatorThin()
+    {
+        GUILayout.Space(2);
+        GUILine(new Color(.1f, .1f, .1f), 1f);
+        GUILine(new Color(.3f, .3f, .3f), 1f);
+        GUILayout.Space(2);
     }
 
     static public void SeparatorBig()
@@ -176,8 +206,6 @@ public class XSStyles : MonoBehaviour
         }
     }
     // --------------
-
-
 
     //Help Buttons
     public static void helpPopup(bool showBox, string title, string message, string button)
@@ -237,5 +265,4 @@ public class XSStyles : MonoBehaviour
             Application.OpenURL("https://www.patreon.com/xiexe");
         }
     }
-
 }

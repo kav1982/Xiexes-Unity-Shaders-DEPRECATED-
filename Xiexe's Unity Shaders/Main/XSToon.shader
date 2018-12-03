@@ -97,11 +97,25 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(None,0,Alpha,1,Red,8,Green,4,Blue,2,RGB,14,RGBA,15)] _colormask("Color Mask", Int) = 15 
 
 		_RampBaseAnchor("RampBaseAnchor", Range(0,1)) = 0.5
-		_EmissionPower("", Range(1,2)) = 1
+		_EmissionPower("", Range(1,5)) = 1
+
+		_OutlineThickness("Outline Thickness", Range(0,1)) = 0.1
+		_OutlineColor("Outline Color", Color) = (0,0,0,1) 
+		_OutlineTextureMap("Outline Masks (R, G, B)", 2D) = "white" {}
+
+		//Toggles to replace keywords
+		[Toggle]_ANISTROPIC_ON("", Int) = 0
+		[Toggle]_PBRREFL_ON("", Int) = 0
+		[Toggle]_MATCAP_ON("", Int) = 0
+		[Toggle]_MATCAP_CUBEMAP_ON("", Int) = 0
+		[Toggle]_WORLDSHADOWCOLOR_ON("", Int) = 0
+		[Toggle]_MIXEDSHADOWCOLOR_ON("", Int) = 0
 	}
 
 	SubShader
 	{
+
+
 		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry" "IsEmissive" = "true"  }
 
 		Cull [_Culling]
@@ -137,14 +151,13 @@ Shader "Xiexe/Toon/XSToon"
 		}
 
 		ENDCG
+
 		CGPROGRAM
 		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
-		#pragma shader_feature _ _ANISTROPIC_ON
+		//#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
-		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
-		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
-
-
+		// #pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
+		// #pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
 		ENDCG
 
 		Pass
@@ -157,11 +170,27 @@ Shader "Xiexe/Toon/XSToon"
 			#pragma fragment frag
 			#pragma target 3.0
 			#pragma multi_compile_shadowcaster
-			#pragma multi_compile UNITY_PASS_SHADOWCASTER
+			#pragma multi_compile XS_SHADOWCASTER_PASS
 			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
 			#include "CGInc/XSShadowCaster.cginc"
 			ENDCG
 		}
+		
+		
+		// Pass
+		// {
+		// 	Name "Outline"
+		// 	Tags{ "LightMode"="ForwardBase" "IgnoreProjector" = "True" }
+		// 	ZWrite Off
+		// 	Cull Front
+		// 	CGPROGRAM
+		// 	#pragma vertex vert
+		// 	#pragma fragment frag
+		// 	#pragma target 3.0
+		// 	#pragma multi_compile XS_OUTLINE_PASS
+		// 	#include "CGInc/XSOutlinePass.cginc"
+		// 	ENDCG
+		// }
 	}
 	Fallback "Diffuse"
 	CustomEditor "XSToonEditor"

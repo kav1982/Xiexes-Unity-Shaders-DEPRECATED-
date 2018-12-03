@@ -1,11 +1,14 @@
-Shader !name
+//The base of this shader was made in amplify - however it has been heavily altered. 
+//If you open this in amplify it will kill the shader, don't do it.
+
+Shader "Xiexe/Toon/XSToonOutlined"
 {
 	Properties
 	{
 		[Toggle]_UseUV2forNormalsSpecular("Use UV2 for Normals/Specular", Float) = 0
 
 	//Enums for all options
-[Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
+		[Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
 		[Enum(Horizontal,0,Vertical,1)] _RampDir ("Shadow Ramp Direction", Int) = 1
 		[Enum(Sharp,0,Smooth,1,Off,2)] _RimlightType("Rimlight Type", Int) = 0
 		[Enum(On,0,Off,1)] _UseReflections ("Use Reflections", Int) = 1
@@ -112,14 +115,15 @@ Shader !name
 
 	SubShader
 	{
-		!shadertags 
+
+
+		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry" "IsEmissive" = "true"  }
 
 		Cull [_Culling]
-		//!blend
 		ColorMask [_colormask]
 		ZTest [_ZTest]
 		ZWrite [_ZWrite]
-		
+
 		Stencil
 		{
 			Ref [_Stencil]
@@ -131,8 +135,9 @@ Shader !name
 			ZFail [_StencilZFail]
 		}
 
+		
 		CGINCLUDE
-		!definerendermode
+		#define opaque
 		#include "CGInc/XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
@@ -147,21 +152,20 @@ Shader !name
 		}
 
 		ENDCG
-		CGPROGRAM
-		
-		//!pragma
 
+		CGPROGRAM
+		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
 		//#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
 		//#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
 		//#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
 		ENDCG
 
-		
 		Pass
 		{
 			Name "ShadowCaster"
 			Tags{ "LightMode" = "ShadowCaster" }
+			Cull Back
 			ZWrite On
 			CGPROGRAM
 			#pragma vertex vert
@@ -173,9 +177,22 @@ Shader !name
 			#include "CGInc/XSShadowCaster.cginc"
 			ENDCG
 		}
-
-		//!outlinepass
+		
+		
+		Pass
+		{
+			Name "Outline"
+			Tags{ "LightMode"="ForwardBase" "IgnoreProjector" = "True" }
+			Cull Front
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma target 3.0
+			#pragma multi_compile XS_OUTLINE_PASS
+			#include "CGInc/XSOutlinePass.cginc"
+			ENDCG
+		}
 	}
-    !fallback
+	Fallback "Diffuse"
 	CustomEditor "XSToonEditor"
 }
