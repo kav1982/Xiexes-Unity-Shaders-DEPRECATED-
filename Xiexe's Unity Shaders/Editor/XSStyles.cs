@@ -11,7 +11,7 @@ public class XSStyles : MonoBehaviour
     private static GUISkin skin;
 
     [UnityEditor.Callbacks.DidReloadScripts]
-    private static void setupIcons()
+    private static void setupIconsOnReload()
     {
 
         uiPath = XSStyles.findAssetPath(uiPath) + "/Editor/Resources/";
@@ -23,7 +23,14 @@ public class XSStyles : MonoBehaviour
             skin = (GUISkin)AssetDatabase.LoadAssetAtPath<GUISkin>(uiPath + "XSGuiSkin.guiskin");
         }
 
-//        Debug.Log(uiPath);
+    }
+
+    public static void setupIcons()
+    {
+        if (skin == null){
+            uiPath = XSStyles.findAssetPath(uiPath) + "/Editor/Resources/";
+            skin = (GUISkin)AssetDatabase.LoadAssetAtPath<GUISkin>(uiPath + "XSGuiSkin.guiskin");
+        }
     }
 
     public static class Styles

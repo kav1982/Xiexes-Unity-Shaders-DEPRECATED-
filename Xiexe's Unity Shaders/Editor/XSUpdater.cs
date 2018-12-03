@@ -33,7 +33,7 @@ public class XSUpdater : EditorWindow
 
     public void OnGUI()
     {
-        
+        XSStyles.setupIcons();
         tab = GUILayout.Toolbar (tab, new string[] {"Documentation", "Updater", "Social"});
          XSStyles.SeparatorThin();
             switch(tab) {

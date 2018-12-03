@@ -326,6 +326,7 @@ public class XSToonEditor : ShaderGUI
                         shadows = EditorGUILayout.Foldout(shadows, "SHADOWS", true); 
                         XSStyles.helpPopup(showHelp, "Shadow Ramp", "A gradient texture - horizontal or vertical. Used to control how shadows look. I.E. A smooth gradient would result in smooth shadows. \n\n If your ramp is colored, you can switch to \"Use Ramp Color\" to make your shadows inherit the color of the ramp, otherwise, your shadows will be colored based on the environment. \n\n The Shadow Style ONLY effects shadows cast onto you by other objects.", "Okay");
                     EditorGUILayout.EndHorizontal();
+                    GUI.skin = null;
                     if(shadows)
                     {
                         XSStyles.SeparatorThin();
