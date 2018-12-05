@@ -150,7 +150,7 @@ public class XSToonEditor : ShaderGUI
     //help buttons for editor
     public static GUISkin _xsSkin;
     public static string uiPath;
-    bool showHelp = false;
+//    bool showHelp = false;
     bool outlined = false;
     private float oldSpec;
 
@@ -332,7 +332,7 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.TextureScaleOffsetProperty(detailNormal);
                         materialEditor.TexturePropertySingleLine(Styles.detailMask, detailMask);
                         materialEditor.ShaderProperty(_NormalUv2, "Normal UV");
-                        materialEditor.ShaderProperty(_NormalUv2, "Detail UV");
+                        materialEditor.ShaderProperty(_DetailNormalUv2, "Detail UV");
                     }
                 //-----
                 
@@ -361,7 +361,10 @@ public class XSToonEditor : ShaderGUI
                             materialEditor.ShaderProperty(_OcclusionColor, "AO Color", 2);
 
                         materialEditor.ShaderProperty(_AOUV2, "Occlusion UV");                
-                        //ambient
+                        
+                        XSStyles.callGradientEditor();
+                    }
+                    //ambient
                         //ramp
                         //mixed
                         if (rampColor.floatValue == 0)
@@ -379,8 +382,6 @@ public class XSToonEditor : ShaderGUI
                             material.SetFloat("_WORLDSHADOWCOLOR_ON", 0);
                             material.SetFloat("_MIXEDSHADOWCOLOR_ON", 1);
                         }
-                        XSStyles.callGradientEditor();
-                    }
                 //-----  
 
                 //Rimlighting
@@ -544,7 +545,7 @@ public class XSToonEditor : ShaderGUI
                                 else 
                                     material.SetFloat("_Metallic", 1);
                                 
-                                materialEditor.ShaderProperty(reflSmooth, "Roughness", 2);
+                                materialEditor.ShaderProperty(reflSmooth, "Smoothness", 2);
                                 materialEditor.ShaderProperty(_MetallicUv2, "UVSet");
                             }
                         }
@@ -579,9 +580,15 @@ public class XSToonEditor : ShaderGUI
                             materialEditor.ShaderProperty(SSSPow, "Sharpness",2);
                             materialEditor.ShaderProperty(SSSIntensity, "Intensity",2);
                         }
-                        else{
+                        else
+                        {
                             material.SetFloat("_SSSIntensity", 0);
-                        }
+                        } 
+                    }
+                    else
+                    {
+                        if(UseSSS.floatValue == 1)
+                            material.SetFloat("_SSSIntensity", 0);
                     }
                 //-----
 
