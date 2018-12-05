@@ -5,7 +5,7 @@ Shader "Xiexe/Toon/XSToon"
 {
 	Properties
 	{
-		[Toggle]_UseUV2forNormalsSpecular("Use UV2 for Normals/Specular", Float) = 0
+		//[Toggle]_UseUV2forNormalsSpecular("Use UV2 for Normals/Specular", Float) = 0
 
 	//Enums for all options
 		[Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
@@ -22,8 +22,18 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(On,0,Off,1)]_UseSpecular("Use Specular", Int) = 1
 		[Enum(On,0,Off,1)] _Emissive("Emissive?", Int) = 1
 		[Enum(Yes,0, No,1)] _ScaleWithLight("ScaleEmissWithLight", Int) = 1
+		
 		[Enum(UV1,0, UV2,1)] _EmissUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _DetailNormalUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _NormalUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _MetallicUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _SpecularUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _SpecularPatternUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)]_AOUV2("Ao UV", int) = 0
+
 		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
+		[Enum(Basic, 0, Integrated, 1)]_AORAMPMODE_ON("", Int) = 0
+		
 		
 	//Textures
 		_MainTex("Main Tex", 2D) = "white" {}
@@ -45,6 +55,7 @@ Shader "Xiexe/Toon/XSToon"
 
 		_SpecularPatternTiling("Specular Pattern Tiling", Vector) = (20,20,0,0)
 		_Color("Color Tint", Color) = (1,1,1,1)
+		_OcclusionColor("Occlusion Color", Color) = (0,0,0,0)
 		_SubsurfaceColor("Subsurface Color", Color) = (0,0,0,0)
 		_NormalTiling("NormalTiling", Vector) = (1,1,0,0)
 		_SpecularIntensity("Specular Intensity", Float) = 0
@@ -110,6 +121,8 @@ Shader "Xiexe/Toon/XSToon"
 		[Toggle]_MATCAP_CUBEMAP_ON("", Int) = 0
 		[Toggle]_WORLDSHADOWCOLOR_ON("", Int) = 0
 		[Toggle]_MIXEDSHADOWCOLOR_ON("", Int) = 0
+		
+		
 	}
 
 	SubShader

@@ -68,6 +68,7 @@
 		float4 _EmissiveColor;
 		float4 _SimulatedLightDirection;
 	 	float4 _Color;
+		float4 _OcclusionColor;
 		float3 _RimColor;
 		float3 _SSSCol;
 		float2 _NormalTiling;
@@ -108,9 +109,16 @@
 		float _ThicknessMapPower;
 		float _RampBaseAnchor;
 		float _ScaleWithLight;
-		float _EmissUv2;
 		float _EmissTintToColor;
 		float _EmissionPower;
+
+		int _EmissUv2;
+		int _DetailNormalUv2;
+		int _NormalUv2;
+		int _MetallicUv2;
+		int _SpecularUv2;
+		int _SpecularPatternUv2;
+		int _AOUV2;
 
 		int _ANISTROPIC_ON;
 		int _PBRREFL_ON;
@@ -118,6 +126,7 @@
 		int _MATCAP_CUBEMAP_ON;
 		int _WORLDSHADOWCOLOR_ON;
 		int _MIXEDSHADOWCOLOR_ON;
+		int _AORAMPMODE_ON;
 
 	//Custom Helper Functions		
 		float2 matcapSample(float3 worldUp, float3 viewDirection, float3 normalDirection)
@@ -195,14 +204,21 @@
 		//Set up UVs
 				float2 texcoord1 = i.uv_texcoord;
 				float2 texcoord2 = i.uv2_texcoord2;
+
 				float2 UVSetEmission = lerp(texcoord1, texcoord2, _EmissUv2);
-				float2 UVSet = lerp(texcoord1,texcoord2,_UseUV2forNormalsSpecular);
+				float2 UVSetNormal = lerp(texcoord1, texcoord2, _NormalUv2);
+				float2 UVSetDetailNormal = lerp(texcoord1, texcoord2, _DetailNormalUv2);
+				float2 UVSetMetallic = lerp(texcoord1, texcoord2, _MetallicUv2);
+				float2 UVSetSpecular = lerp(texcoord1, texcoord2, _SpecularUv2);
+				float2 UVSetSpecularPattern = lerp(texcoord1, texcoord2, _SpecularPatternUv2);
+				float2 UVSetAO = lerp(texcoord1, texcoord2, _AOUV2);
+
 				float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
-				float2 uv_Normal = UVSet * _Normal_ST.xy + _Normal_ST.zw;
-				float2 uv_DetailNormal = UVSet * _DetailNormal_ST.xy + _DetailNormal_ST.zw;
-				float2 uv_Specular = UVSet * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
-				float2 uv_SpecularPattern = UVSet * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
-				float2 uv_EmissiveTex = i.uv2_texcoord2;// * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
+				float2 uv_Normal = UVSetNormal * _Normal_ST.xy + _Normal_ST.zw;
+				float2 uv_DetailNormal = UVSetDetailNormal * _DetailNormal_ST.xy + _DetailNormal_ST.zw;
+				float2 uv_Specular = UVSetSpecular * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
+				float2 uv_SpecularPattern = UVSetSpecularPattern * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
+				float2 uv_MetallicRough = UVSetMetallic * _MetallicMap_ST.xy + _MetallicMap_ST.zw;
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
@@ -276,8 +292,12 @@
 
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
-				float3 occlusionMap = UNITY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, _MainTex,i.uv_texcoord) ;
-				float remappedRamp = (NdL * 0.5 + 0.5) * (occlusionMap.x + ((1-occlusionMap.x) * (1-_OcclusionStrength)));
+				float3 occlusionMap = UNITY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, _MainTex, UVSetAO);
+				float remappedRamp = (NdL * 0.5 + 0.5);
+				if(_AORAMPMODE_ON == 1)
+				{
+					remappedRamp *= (occlusionMap.x + ((1-occlusionMap.x) * (1-_OcclusionStrength)));
+				}
 				// #if DIRECTIONAL
 				// 	remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
 				// #else
@@ -344,10 +364,14 @@
 
 				float4 MainTex = pow(UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex ), _Saturation);
 				float4 MainColor = MainTex * _Color;
+				if(_AORAMPMODE_ON == 0)
+				{
+					MainColor = lerp(MainColor * _OcclusionColor, MainColor, occlusionMap.r * _OcclusionStrength);
+				}
 			
 			//Specular
 				float4 specularMap = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularMap, _MainTex, uv_Specular);
-				float specularPatternTex = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularPattern, _MainTex,(((UVSet - float2( 0.5,0.5)) * uv_SpecularPattern) + float2(0.5,0.5))).r;
+				float specularPatternTex = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularPattern, _MainTex, uv_SpecularPattern).r;
 				float3 specularHighlight = float3(0,0,0);
 					if (_ANISTROPIC_ON == 1)
 					{
@@ -384,9 +408,10 @@
 			//PBR
 				if(_PBRREFL_ON == 1)
 				{
-					metalMap = tex2D(_MetallicMap, uv_MainTex) * _Metallic;
-					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
-					float roughness = _ReflSmoothness * roughMap;
+					metalMap = tex2D(_MetallicMap, uv_MetallicRough);
+					metalMap.rgb *= _Metallic;
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
+					float roughness = (1-metalMap.a * _ReflSmoothness);
 					roughness *= 1.7 - 0.7 * roughness;
 					float4 envSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectedDir, roughness * UNITY_SPECCUBE_LOD_STEPS);
 					reflection = DecodeHDR(envSample, unity_SpecCube0_HDR);
@@ -403,7 +428,7 @@
 				//Note: This matcap is intended for VR. 
 				if(_MATCAP_ON == 1)
 				{
-					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
 					float3 upVector = float3(0,1,0);
 					float2 remapUV = matcapSample(upVector, viewDir, worldNormal);
 					reflection = tex2Dlod(_MetallicMap, float4(remapUV, 0, (_ReflSmoothness * UNITY_SPECCUBE_LOD_STEPS)));
@@ -413,9 +438,10 @@
 			//Cubemap Baked
 				if(_MATCAP_CUBEMAP_ON == 1)
 				{
-					metalMap = tex2D(_MetallicMap, uv_MainTex) * _Metallic;
-					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
-					float roughness = _ReflSmoothness * roughMap;
+					metalMap = tex2D(_MetallicMap, uv_MetallicRough);
+					metalMap.rgb *= _Metallic;
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
+					float roughness = (1-metalMap.a * _ReflSmoothness);
 					roughness *= 1.7 - 0.7 * roughness;
 					reflection = texCUBElod(_BakedCube, float4(reflectedDir, roughness * UNITY_SPECCUBE_LOD_STEPS));
 				}

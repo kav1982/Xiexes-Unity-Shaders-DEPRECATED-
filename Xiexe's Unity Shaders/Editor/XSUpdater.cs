@@ -50,7 +50,7 @@ public class XSUpdater : EditorWindow
                         
                         XSStyles.HelpBox("The currently installed version is: v" + XSStyles.ver + "\n\nTo check for updates, use the update button. If you choose to download an update, you will need to manually overwrite the old install by extracting the .zip into the project using the windows explorer. \n\nDo not drag the update directly into Unity - it won't ask to overwrite - it'll just create a duplicate and break.", MessageType.Info);
                         XSStyles.SeparatorThin();
-                        if (GUILayout.Button("Fetch Update"))
+                        if (GUILayout.Button("Check for Updates"))
                         {
                             req();
                             EditorApplication.update += changelogEditorUpdate;
@@ -80,7 +80,7 @@ public class XSUpdater : EditorWindow
                         
                         }
                         else{
-                            XSStyles.doLabel("Hit fetch update to see updates.");
+                            XSStyles.doLabel("Hit 'Check for Updates' to begin");
                         }
                     EditorGUI.EndChangeCheck();
                    
@@ -88,7 +88,17 @@ public class XSUpdater : EditorWindow
 
                 case 2:
                     //show Patrons
-                        XSStyles.doLabel("Thank you to my patreon supporters, and the people who have helped me along the way, you guys are great! \n\n Patrons as of " + XSStyles.ver + "\n - Wandering Youth \n - SaltQueen \n - Q \n - Kurisu \n- Your name could be here!");
+                    XSStyles.doLabel("Thank you to my patreon supporters, and the people who have helped me along the way, you guys are great!");
+                    XSStyles.SeparatorThin();
+                    XSStyles.doLabel("Patrons as of " + XSStyles.ver);
+                    XSStyles.SeparatorThin();
+                    scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
+                        for(int i = 0; i < XSStyles.patrons.Length; i++)
+                        {
+                            XSStyles.doLabel(" - " + XSStyles.patrons[i]);
+                        }
+                    EditorGUILayout.EndScrollView();
+
                     XSStyles.SeparatorThin();
                     //show social links
                     EditorGUILayout.BeginHorizontal();

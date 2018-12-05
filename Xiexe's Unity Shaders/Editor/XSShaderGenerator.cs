@@ -188,7 +188,7 @@ public class XSShaderGenerator : EditorWindow
                 }
                 if(File.Exists(shaderPath + "XSToonCutoutOutlined.shader") && cutout == true && outlined == true)
                 {
-                     ArrayUtility.Add(ref existingShaders, "XSToonCutout");
+                     ArrayUtility.Add(ref existingShaders, "XSToonCutoutOutlined");
                     existsBox = 1;
                 }
                 if (File.Exists(shaderPath + "XSToonTransparent.shader") && transparent == true)

@@ -50,7 +50,7 @@ public class XSToonEditor : ShaderGUI
         public static GUIContent detailMask = new GUIContent("Detail Mask", "Detail normal mask. Black to white, white = area with setail normals, black = area without.");
         public static GUIContent occlusionMap = new GUIContent("Occlusion Map", "Occlusion map. Used to bake shadowing into areas by removing Ambient Color. Black to White texture.");
         public static GUIContent thicknessMap = new GUIContent("Thickness Map", "Used to show 'Thickness' in an area by stopping light from coming through. Black to white texture, Black means less light comes through.");
-        public static GUIContent outlineTex = new GUIContent("Outline Masks (Packed)", "The Outline Masks are used to control where the outlines can show. The Red Channel of the texture controls the Width of the outline, and the Green channel controls if the outline gets completely removed in certain areas.");
+        public static GUIContent outlineTex = new GUIContent("Outline Masks", "The Outline Masks are used to control where the outlines can show. The Red Channel of the texture controls the Width of the outline. Other color channels may be used for other things in the future.");
     }
 
     void DoFooter()
@@ -71,7 +71,7 @@ public class XSToonEditor : ShaderGUI
         GUILayout.FlexibleSpace();
         EditorGUILayout.EndHorizontal();
     }
-
+    MaterialEditor m_MaterialEditor;
     MaterialProperty shadowRamp;
     MaterialProperty specMap;
     MaterialProperty specPattern;
@@ -89,8 +89,6 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty alphaCutoff;
     MaterialProperty culling;
     MaterialProperty rimStyle;
-    MaterialProperty uv2;
-    MaterialEditor m_MaterialEditor;
     MaterialProperty colorMask;
     MaterialProperty stencil;
     MaterialProperty stencilComp;
@@ -138,6 +136,14 @@ public class XSToonEditor : ShaderGUI
     MaterialProperty OutlineThickness;
     MaterialProperty OutlineColor;
     MaterialProperty OutlineTextureMap;
+    MaterialProperty _AORAMPMODE_ON;
+    MaterialProperty _OcclusionColor;
+	MaterialProperty _DetailNormalUv2;
+	MaterialProperty _NormalUv2;
+	MaterialProperty _MetallicUv2;
+	MaterialProperty _SpecularUv2;
+	MaterialProperty _SpecularPatternUv2;
+    MaterialProperty _AOUV2;
 
     public Texture ramp;
 
@@ -160,7 +166,7 @@ public class XSToonEditor : ShaderGUI
 
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
     {
-
+        XSStyles.setupIcons();
         Material material = materialEditor.target as Material;
         {
             //Find all the properties within the shader
@@ -180,7 +186,6 @@ public class XSToonEditor : ShaderGUI
             alphaCutoff = ShaderGUI.FindProperty("_Cutoff", props);
             culling = ShaderGUI.FindProperty("_Culling", props);
             rimStyle = ShaderGUI.FindProperty("_RimlightType", props);
-            uv2 = ShaderGUI.FindProperty("_UseUV2forNormalsSpecular", props);
             advMode = ShaderGUI.FindProperty("_advMode", props);
             reflSmooth = ShaderGUI.FindProperty("_ReflSmoothness", props);
             metal = ShaderGUI.FindProperty("_Metallic", props);
@@ -229,6 +234,15 @@ public class XSToonEditor : ShaderGUI
                 outlined = false;
                 outlines = false;
             }
+            _AORAMPMODE_ON = ShaderGUI.FindProperty("_AORAMPMODE_ON", props);
+            _OcclusionColor = ShaderGUI.FindProperty("_OcclusionColor", props);
+
+            _DetailNormalUv2 = ShaderGUI.FindProperty("_DetailNormalUv2", props);
+            _NormalUv2 = ShaderGUI.FindProperty("_NormalUv2", props);
+            _MetallicUv2 = ShaderGUI.FindProperty("_MetallicUv2", props);
+            _SpecularUv2 = ShaderGUI.FindProperty("_SpecularUv2", props);
+            _SpecularPatternUv2 = ShaderGUI.FindProperty("_SpecularPatternUv2", props);
+            _AOUV2 = ShaderGUI.FindProperty("_AOUV2", props);
 
             //advanced options
             colorMask = ShaderGUI.FindProperty("_colormask", props);
@@ -270,14 +284,14 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
                         materialEditor.TexturePropertySingleLine(Styles.MainTexText, mainTex, tint);
-                        XSStyles.helpPopup(showHelp, "Main Texture Slots", "The Main Texture - provides color, and Alpha in the case of Transparency. \n\n Occlusion is used to have areas always be shadowed. This is done with a black to white texture.", "Okay");
+                        XSStyles.helpPopup(XSStyles.mainURL);
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                         materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
 
                        
                 //cutoff
-                    if (material.shader == Shader.Find("Xiexe/Toon/XSToonCutout"))
+                    if (material.shader == Shader.Find("Xiexe/Toon/XSToonCutout") || material.shader == Shader.Find("Xiexe/Toon/XSToonCutoutOutlined"))
                     {
                         materialEditor.ShaderProperty(alphaCutoff, Styles.cutoutText);
                     }
@@ -289,7 +303,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
                         outlines = EditorGUILayout.Foldout(outlines, "OUTLINES", true);
-                        XSStyles.helpPopup(showHelp, "Outlines", "Outlines, you can control the outline width and colors, and mask the width with a texture.", "Okay");
+                        XSStyles.helpPopup(XSStyles.outlineURL);
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;                    
                     if (outlines)
@@ -306,7 +320,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
                         normals = EditorGUILayout.Foldout(normals, "NORMAL MAPS", true);  
-                        XSStyles.helpPopup(showHelp, "Normal Map", "The normal map - controls how light and shadow distorts on the surface of an object. \n\n Detail Normals can be tiled for small micro details, such as scratches on a metal surface.", "Okay");
+                        XSStyles.helpPopup(XSStyles.normalsURL);
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                     if(normals)
@@ -317,6 +331,8 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.TexturePropertySingleLine(Styles.detailNormal, detailNormal, detailNormalStrength);
                         materialEditor.TextureScaleOffsetProperty(detailNormal);
                         materialEditor.TexturePropertySingleLine(Styles.detailMask, detailMask);
+                        materialEditor.ShaderProperty(_NormalUv2, "Normal UV");
+                        materialEditor.ShaderProperty(_NormalUv2, "Detail UV");
                     }
                 //-----
                 
@@ -324,7 +340,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
                         shadows = EditorGUILayout.Foldout(shadows, "SHADOWS", true); 
-                        XSStyles.helpPopup(showHelp, "Shadow Ramp", "A gradient texture - horizontal or vertical. Used to control how shadows look. I.E. A smooth gradient would result in smooth shadows. \n\n If your ramp is colored, you can switch to \"Use Ramp Color\" to make your shadows inherit the color of the ramp, otherwise, your shadows will be colored based on the environment. \n\n The Shadow Style ONLY effects shadows cast onto you by other objects.", "Okay");
+                        XSStyles.helpPopup(XSStyles.shadowsURL);
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                     if(shadows)
@@ -333,18 +349,18 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.TexturePropertySingleLine(Styles.rampText, shadowRamp);
                         materialEditor.ShaderProperty(rampColor, "Ramp Mode", 2);
                         materialEditor.ShaderProperty(shadowType, Styles.shadowTypeText, 2);
-
                         materialEditor.TexturePropertySingleLine(Styles.occlusionMap, occlusionMap); 
+                        materialEditor.ShaderProperty(_AORAMPMODE_ON, "AO Style", 2);
                         
-                        if ( material.GetTexture("_OcclusionMap") )
-                        {
+                        if ( material.GetTexture("_OcclusionMap") && _AORAMPMODE_ON.floatValue == 1 )
                            materialEditor.ShaderProperty(occlusionStrength, "Strength", 3);
-                        }
                         else
-                        {
                             material.SetFloat("_OcclusionStrength", 1);
-                        }
-                    
+
+                        if(_AORAMPMODE_ON.floatValue == 0)
+                            materialEditor.ShaderProperty(_OcclusionColor, "AO Color", 2);
+
+                        materialEditor.ShaderProperty(_AOUV2, "Occlusion UV");                
                         //ambient
                         //ramp
                         //mixed
@@ -371,7 +387,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                             EditorGUILayout.BeginHorizontal();
                             rimlighting = EditorGUILayout.Foldout(rimlighting, "RIMLIGHT", true); 
-                            XSStyles.helpPopup(showHelp, "Rimlighting", "Rimlights are an additive light around the rim of the model. You can choose to have it sharp, smooth, or off.", "Okay");
+                            XSStyles.helpPopup(XSStyles.rimlightURL);
                         EditorGUILayout.EndHorizontal();
                         GUI.skin = null;
                         if(rimlighting)
@@ -404,7 +420,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                         EditorGUILayout.BeginHorizontal();
                         emission = EditorGUILayout.Foldout(emission, "EMISSION", true); 
-                        XSStyles.helpPopup(showHelp, "Emission", "Emission is the act of a surface emitting light. \n\nThe Emission Map is generally a black and white texture used to mark where emission can happen. Black would cut off all emission, while white would allow full emission in a given area. \n\n You can adjust how bright the emission is, and the color of it, through the color picker. ", "Okay");
+                        XSStyles.helpPopup(XSStyles.emissionsURL);
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                     if(emission)
@@ -415,11 +431,11 @@ public class XSToonEditor : ShaderGUI
                         {
                             materialEditor.TexturePropertySingleLine(Styles.emissText, emissiveTex, emissiveColor);
                             materialEditor.ShaderProperty(EmissTintToColor, "Tint To Diffuse");
-                            materialEditor.ShaderProperty(UseUV2Emiss, "UV Channel");
                             materialEditor.ShaderProperty(EmissScaleWithLight, "Scale With Light");
                             if(EmissScaleWithLight.floatValue == 0){
                                 materialEditor.ShaderProperty(EmissionPower, "Threshold", 2);
                             }
+                            materialEditor.ShaderProperty(UseUV2Emiss, "Emission UV");
                         }
                         else
                         {
@@ -432,7 +448,7 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
                         specular = EditorGUILayout.Foldout(specular, "SPECULAR", true); 
-                        XSStyles.helpPopup(showHelp, "Specularity", "Specular reflections are the result of light bouncing off of an object. \n\nThis effect is generally used to show gloss on things such as a shiny plastic material. \n\nYou can mask out where reflections can happen with the Specular Map, and you can make the reflections reflect in a pattern with the Specular Pattern. The default texture, for instance, would reflect light in the pattern of lines.", "Okay");
+                        XSStyles.helpPopup(XSStyles.specularURL);
                     EditorGUILayout.EndHorizontal();
                         EditorGUI.BeginChangeCheck();
                     if(specular)
@@ -460,6 +476,8 @@ public class XSToonEditor : ShaderGUI
                                 materialEditor.ShaderProperty(specArea, Styles.SmoothnessText, 3);
                             }
                             materialEditor.ShaderProperty(specIntensity, Styles.sintensityText, 3);
+                            materialEditor.ShaderProperty(_SpecularUv2,"Specular UV");
+                            materialEditor.ShaderProperty(_SpecularPatternUv2,"Pattern UV");    
                         }
                         else
                         {
@@ -472,25 +490,12 @@ public class XSToonEditor : ShaderGUI
                     XSStyles.Separator();
                         EditorGUILayout.BeginHorizontal();
                         reflections = EditorGUILayout.Foldout(reflections, "REFLECTIONS", true); 
-                        XSStyles.helpPopup(showHelp, "Reflections", "This panel is all about reflections. XSToon supports many styles of reflections. \n\n-PBR \n This is what you think about when you think reflections - these will sample the reflection probes in a room and reflect them back off of the surface. \n\n-Matcap \n This takes a SphereMap texture and maps it based on your viewing direction to the surface, to simulate reflections. \n\n -Cubemap \n This is just a cubemap reflection, you can plug any cubemap in and have it reflect, as if you were in that environment.", "Okay");
+                        XSStyles.helpPopup(XSStyles.reflURL);
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                     if(reflections)
                     {
                         XSStyles.SeparatorThin();
-                        // //If the shadow ramp isn't linear, show a warning and tell the user to fix it. 
-                        // Texture2D roughMap = (Texture2D)material.GetTexture("_RoughMap");
-                        //     string texPath = AssetDatabase.GetAssetPath(roughMap);
-                        //     TextureImporter tex = (TextureImporter)TextureImporter.GetAtPath(texPath);
-                        //     Debug.Log(texPath);
-                        //     if (tex.sRGBTexture == true)
-                        //     {
-                        //         tex = tex.sRGBTexture == false;
-                        //         AssetDatabase.Refresh();
-                        //     }
-                        //     else
-                        //     {
-                        //     }
                         materialEditor.ShaderProperty(useRefl, "Reflections");
                         if (useRefl.floatValue == 0)
                         {
@@ -504,9 +509,14 @@ public class XSToonEditor : ShaderGUI
                                 material.SetFloat("_MATCAP_ON", 0);
                                 material.SetFloat("_MATCAP_CUBEMAP_ON", 0);
                                 materialEditor.TexturePropertySingleLine(Styles.MetalMap, metalMap);
-                                materialEditor.ShaderProperty(metal, "Metallic", 2);
-                                materialEditor.TexturePropertySingleLine(Styles.roughMap, roughMap);
-                                materialEditor.ShaderProperty(reflSmooth, "Roughness", 2);
+
+                                if(!material.GetTexture("_MetallicMap")) 
+                                    materialEditor.ShaderProperty(metal, "Metallic", 2);
+                                else 
+                                    material.SetFloat("_Metallic", 1);
+                                
+                                materialEditor.ShaderProperty(reflSmooth, "Smoothness", 2);
+                                materialEditor.ShaderProperty(_MetallicUv2, "Metal/Rough UV");
                             }
                             //matcap
                             if (reflType.floatValue == 1)
@@ -528,9 +538,14 @@ public class XSToonEditor : ShaderGUI
                                 material.SetFloat("_PBRREFL_ON", 0);
                                 materialEditor.TexturePropertySingleLine(Styles.bakedCube, bakedCube);
                                 materialEditor.TexturePropertySingleLine(Styles.MetalMap, metalMap);
-                                materialEditor.ShaderProperty(metal, "Metallic", 2);
-                                materialEditor.TexturePropertySingleLine(Styles.roughMap, roughMap);
+
+                                if(!material.GetTexture("_MetallicMap")) 
+                                    materialEditor.ShaderProperty(metal, "Metallic", 2);
+                                else 
+                                    material.SetFloat("_Metallic", 1);
+                                
                                 materialEditor.ShaderProperty(reflSmooth, "Roughness", 2);
+                                materialEditor.ShaderProperty(_MetallicUv2, "UVSet");
                             }
                         }
                         else
@@ -547,7 +562,7 @@ public class XSToonEditor : ShaderGUI
                 XSStyles.Separator();
                     EditorGUILayout.BeginHorizontal();
                         subsurface = EditorGUILayout.Foldout(subsurface, "SUBSURFACE SCATTERING", true); 
-                        XSStyles.helpPopup(showHelp, "Subsurface Scattering", "Subsurface scattering is the act of light bouncing and scattering inside of a material before exiting the other side. This can be used to simulate the softness of skin, or things such as marble statues, which might have light bounces around and make them appear 'translucent.'", "Okay");
+                        XSStyles.helpPopup(XSStyles.sssURL);
                         GUI.skin = null;
                     EditorGUILayout.EndHorizontal();
                     if(subsurface)
@@ -591,7 +606,6 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.ShaderProperty(stencilZFail, stencilZFail.displayName, 2);
                         materialEditor.ShaderProperty(ztest, ztest.displayName, 2);
                         materialEditor.ShaderProperty(zwrite, zwrite.displayName, 2);
-                        materialEditor.ShaderProperty(uv2, "UV2 for Normal/Spec", 2);
                         materialEditor.ShaderProperty(RampBaseAnchor, "Ramp Anchor", 2);
                         
                             // Reset ZWrite/ZTest

@@ -6,7 +6,21 @@ using System.IO;
 [InitializeOnLoad]
 public class XSStyles : MonoBehaviour
 {
-    public static string ver = "1.6 BETA";
+    public static string ver = "1.6 BETA 2";
+
+    //Help URLs
+    public static string mainURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.xh0nk8x7ws1g";
+    public static string normalsURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.j7qze9btrmw8";
+    public static string shadowsURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.8l0gi0hntyfs";
+    public static string rimlightURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.tpxp2jrhrhxp";
+    public static string emissionsURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.zc983jrwb5x4";
+    public static string specularURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.gyu8l75mbtdq";
+    public static string reflURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.yqzg9axi3gi";
+    public static string sssURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.j2nk83f6azph";
+    public static string outlineURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.jpaf9t25in8p";
+
+    public static string[] patrons = {"Wandering Youth", "Salt Queen", "Q", "NepsyNeptune", "Kurisu"};
+
     public static string uiPath;
     private static GUISkin skin;
 
@@ -215,17 +229,18 @@ public class XSStyles : MonoBehaviour
     // --------------
 
     //Help Buttons
-    public static void helpPopup(bool showBox, string title, string message, string button)
+    public static void helpPopup(string url)//bool showBox, string title, string message, string button)
     {
         GUI.skin = skin;
         if (GUILayout.Button("", "helpButton", GUILayout.Width(16), GUILayout.Height(16)))
         {
-            showBox = true;
-            if (showBox == true)
-            {
-                EditorUtility.DisplayDialog(title,
-                                            message, button);
-            }
+            Application.OpenURL(url);
+            // showBox = true;
+            // if (showBox == true)
+            // {
+            //     EditorUtility.DisplayDialog(title,
+            //                                 message, button);
+            // }
         }
     }
 
@@ -272,4 +287,5 @@ public class XSStyles : MonoBehaviour
             Application.OpenURL("https://www.patreon.com/xiexe");
         }
     }
+    
 }
