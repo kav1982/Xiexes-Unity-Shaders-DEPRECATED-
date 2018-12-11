@@ -6,7 +6,7 @@ using System.IO;
 [InitializeOnLoad]
 public class XSStyles : MonoBehaviour
 {
-    public static string ver = "1.6 BETA 2.1";
+    public static string ver = "1.6";
 
     //Help URLs
     public static string mainURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.xh0nk8x7ws1g";
@@ -19,7 +19,7 @@ public class XSStyles : MonoBehaviour
     public static string sssURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.j2nk83f6azph";
     public static string outlineURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.jpaf9t25in8p";
 
-    public static string[] patrons = {"Wandering Youth", "Salt Queen", "Q", "NepsyNeptune", "Kurisu"};
+    public static string[] patrons = {"Wandering Youth", "Salt Queen", "Q", "NepsyNeptune", "Kurisu", "xXxEdgeLord69MSxXx"};
 
     public static string uiPath;
     private static GUISkin skin;

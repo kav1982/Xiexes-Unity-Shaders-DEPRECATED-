@@ -44,13 +44,13 @@ public class XSToonEditor : ShaderGUI
         public static GUIContent Saturation = new GUIContent("Saturation", "Saturation of the main texture.");
         public static GUIContent Matcap = new GUIContent("Matcap Texture", "A matcap texture. These generally look like orbs with some sort of lighting on them. You can find some in 'Textures > Matcap' as examples.");
         public static GUIContent normalTiling = new GUIContent("Tiling", "Normal map tiling, adjust the X and Y to make the normals larger or smaller.");
-        public static GUIContent MatcapCubemap = new GUIContent("Cubemap", "A Cubemap. This can be made by selecting the texture and changing the type to 'cubemap' in the inspector. You may also want to change 'Convolution' to be 'Glossy Reflection' as well");
+        public static GUIContent MatcapCubemap = new GUIContent("Cubemap", "A Cubemap. If you've imported your own, make sure to check the import settings for it and set the 'Convolution' type to 'Glossy Reflection.'");
         public static GUIContent MatcapMask = new GUIContent("Mask", "The mask for the matcap. Black for off, white for on.");
         public static GUIContent detailNormal = new GUIContent("Detail Normal", "Detail Normals. These get blended on top of your regular normal for upclose detailing.");
-        public static GUIContent detailMask = new GUIContent("Detail Mask", "Detail normal mask. Black to white, white = area with setail normals, black = area without.");
-        public static GUIContent occlusionMap = new GUIContent("Occlusion Map", "Occlusion map. Used to bake shadowing into areas by removing Ambient Color. Black to White texture.");
-        public static GUIContent thicknessMap = new GUIContent("Thickness Map", "Used to show 'Thickness' in an area by stopping light from coming through. Black to white texture, Black means less light comes through.");
-        public static GUIContent outlineTex = new GUIContent("Outline Masks", "The Outline Masks are used to control where the outlines can show. The Red Channel of the texture controls the Width of the outline. Other color channels may be used for other things in the future.");
+        public static GUIContent detailMask = new GUIContent("Detail Mask", "Detail normal mask. Black to white, white = area with detail normals, black = area without. (This only affects the Detail Normal)");
+        public static GUIContent occlusionMap = new GUIContent("Occlusion Map", "Occlusion map. Used to bake shadowing into areas through various methods. Black would be an area with forced shadows - white would be an area without.");
+        public static GUIContent thicknessMap = new GUIContent("Thickness Map", "Used to show 'Thickness' in an area by stopping light from coming through. Black to white texture, Black means less light comes through. Only affects Subsurface Scattering.");
+        public static GUIContent outlineTex = new GUIContent("Outline Masks", "The Outline Mask is used to control where the outlines can show, and the width of the outline. Setting this to fully black will make the outline completely gone, where fully white would be full width.");
     }
 
     void DoFooter()

@@ -127,7 +127,7 @@ public class XSUpdater : EditorWindow
         while (!www.isDone)
             return;
 
-        if (www.isError)
+        if (www.isNetworkError)
             Debug.Log(www.error);
         else
             updateHandler(www.downloadHandler.text);         
@@ -160,7 +160,7 @@ public class XSUpdater : EditorWindow
         while (!www.isDone)
             return;
 
-        if (www.isError)
+        if (www.isNetworkError)
             Debug.Log(www.error);
         else
             fetchChangelog(www.downloadHandler.text);
