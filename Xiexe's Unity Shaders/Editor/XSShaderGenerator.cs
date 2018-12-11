@@ -17,6 +17,7 @@ public class XSShaderGenerator : EditorWindow
     //Set up variables for later use.
     //Names Var
     private static string cutoutName = "XSToonCutout";
+    private static string cutoutOutlinedName = "XSToonCutoutOutlined";
     private static string transparentName = "XSToonTransparent";
     private static string transparentShadowedName = "XSToonTransparentShadowed";
     private static string transparentFadeName = "XSToonFade";
@@ -25,6 +26,7 @@ public class XSShaderGenerator : EditorWindow
 
     //Strings for Name
     private static string cutoutStringName = "Shader \"Xiexe/Toon/XSToonCutout\"";
+    private static string cutoutOutlinedStringName = "Shader \"Xiexe/Toon/XSToonCutoutOutlined\"";
     private static string transparentStringName = "Shader \"Xiexe/Toon/XSToonTransparent\"";
     private static string transparentShadowedStringName = "Shader \"Xiexe/Toon/XSToonTransparentShadowed\"";
     private static string transparentFadeStringName = "Shader \"Xiexe/Toon/XSToonFade\"";
@@ -71,6 +73,9 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadeShadowedBlend = "Blend One OneMinusSrcAlpha";
     private static string transparentDitheredBlend = "";
 
+    //Generated Outline Pass
+    private static string outlinePass = "Pass \n{ \n Name \"Outline\" \n Tags{ \"LightMode\"=\"ForwardBase\" \"IgnoreProjector\" = \"True\" } \n Cull Front \n CGPROGRAM \n #pragma vertex vert \n #pragma fragment frag \n #pragma target 3.0 \n #pragma multi_compile XS_OUTLINE_PASS \n #include \"CGInc/XSOutlinePass.cginc\" \n ENDCG \n}";
+
     //Set up Search tags for later use.
     private static string searchForName = "!name";
     private static string searchForTags = "!shadertags";
@@ -78,6 +83,7 @@ public class XSShaderGenerator : EditorWindow
     private static string searchForFallback = "!fallback";
     private static string searchForPragma = "!pragma";
     private static string searchForBlend = "!blend";
+//    private static string searchForOutlinePass = "!outlinepass";
 
     //set up toggles for different variants
     private static bool cutout = false;
@@ -86,13 +92,14 @@ public class XSShaderGenerator : EditorWindow
     private static bool transparentFade = false;
     private static bool transparentFadeShadowed = false;
     private static bool transparentDithered = false;
+    private static bool outlined = false;
 
     private static bool exists = false;
     private static string whichExists = "";
     private static bool instance;
     private static string[] queued = { };
     private static float progress;
-    [MenuItem("Xiexe/Tools/Shader Generator")]
+    [MenuItem("Tools/Xiexe/XSToon/Shader Generator")]
     public static void ShowWindow()
     {
         XSShaderGenerator window = EditorWindow.GetWindow<XSShaderGenerator>(true, "XSToon: Shader Generator", true);
@@ -111,7 +118,14 @@ public class XSShaderGenerator : EditorWindow
 
         XSStyles.Separator();
         XSStyles.doLabel("Generate Variants");
-        cutout = GUILayout.Toggle(cutout, "Cutout");
+       
+            GUILayout.BeginHorizontal();
+                cutout = GUILayout.Toggle(cutout, "Cutout");
+            GUILayout.FlexibleSpace();
+                outlined = GUILayout.Toggle(outlined, "Outlined");
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
         transparent = GUILayout.Toggle(transparent, "Transparent");
         transparentShadowed = GUILayout.Toggle(transparentShadowed, "Transparent Shadowed");
         transparentFade = GUILayout.Toggle(transparentFade, "Transparent Fade");
@@ -167,9 +181,14 @@ public class XSShaderGenerator : EditorWindow
             case true:
                 int existsBox = 0;
 
-                if (File.Exists(shaderPath + "XSToonCutout.shader") && cutout == true)
+                if (File.Exists(shaderPath + "XSToonCutout.shader") && cutout == true && outlined == false)
                 {
                     ArrayUtility.Add(ref existingShaders, "XSToonCutout");
+                    existsBox = 1;
+                }
+                if(File.Exists(shaderPath + "XSToonCutoutOutlined.shader") && cutout == true && outlined == true)
+                {
+                     ArrayUtility.Add(ref existingShaders, "XSToonCutoutOutlined");
                     existsBox = 1;
                 }
                 if (File.Exists(shaderPath + "XSToonTransparent.shader") && transparent == true)
@@ -238,6 +257,11 @@ public class XSShaderGenerator : EditorWindow
                     ArrayUtility.Add(ref existingShaders, "XSToonCutout");
                     exists = true;
                 }
+                if (File.Exists(shaderPath + "XSToonCutoutOutlined.shader"))
+                {
+                    ArrayUtility.Add(ref existingShaders, "XSToonCutoutOutlined");
+                    exists = true;
+                }
                 if (File.Exists(shaderPath + "XSToonTransparent.shader"))
                 {
                     ArrayUtility.Add(ref existingShaders, "XSToonTransparent");
@@ -274,6 +298,10 @@ public class XSShaderGenerator : EditorWindow
         {
             ArrayUtility.Add(ref queued, "cutout");
         }
+        if (cutout == true && outlined == true)
+        {
+            ArrayUtility.Add(ref queued, "cutoutOutlined");
+        }
         if (transparent == true)
         {
             ArrayUtility.Add(ref queued, "trsprnt");
@@ -301,34 +329,39 @@ public class XSShaderGenerator : EditorWindow
     {
         int index;
 
-        if (cutout == true)
+        if (cutout == true && outlined == false)
         {
             index = 0;
             WriteShader(finalFilePath, index);
         }
-        if (transparent == true)
+        if (cutout == true && outlined == true)
         {
             index = 1;
             WriteShader(finalFilePath, index);
         }
-        if (transparentShadowed == true)
+        if (transparent == true)
         {
             index = 2;
             WriteShader(finalFilePath, index);
         }
-        if (transparentFade == true)
+        if (transparentShadowed == true)
         {
             index = 3;
             WriteShader(finalFilePath, index);
         }
-        if (transparentFadeShadowed == true)
+        if (transparentFade == true)
         {
             index = 4;
             WriteShader(finalFilePath, index);
         }
-        if (transparentDithered == true)
+        if (transparentFadeShadowed == true)
         {
             index = 5;
+            WriteShader(finalFilePath, index);
+        }
+        if (transparentDithered == true)
+        {
+            index = 6;
             WriteShader(finalFilePath, index);
         }
     }
@@ -340,37 +373,37 @@ public class XSShaderGenerator : EditorWindow
 
         string[] lines = File.ReadAllLines(finalFilePath + temp);
 
-        string[] chosenShaderName = {cutoutName, transparentName,
+        string[] chosenShaderName = {cutoutName, cutoutOutlinedName, transparentName,
                                 transparentShadowedName, transparentFadeName,
                                 transparentFadeShadowedName, transparentDitheredName
                                 };
 
-        string[] chosenShaderStringName = {cutoutStringName, transparentStringName,
+        string[] chosenShaderStringName = {cutoutStringName, cutoutOutlinedStringName, transparentStringName,
                                 transparentShadowedStringName, transparentFadeStringName,
                                 transparentFadeShadowedStringName, transparentDitheredStringName
                                 };
 
-        string[] chosenShaderTags = {cutoutTags, transparentTags,
+        string[] chosenShaderTags = {cutoutTags, cutoutTags, transparentTags,
                                 transparentShadowedTags, transparentFadeTags,
                                 transparentFadeShadowedTags, transparentDitheredTags
                                 };
 
-        string[] chosenShaderRender = {cutoutRender, transparentRender,
+        string[] chosenShaderRender = {cutoutRender, cutoutRender, transparentRender,
                                 transparentShadowedRender, transparentFadeRender,
                                 transparentFadeShadowedRender, transparentDitheredRender
                                 };
 
-        string[] chosenShaderFallback = {cutoutFallback, transparentFallback,
+        string[] chosenShaderFallback = {cutoutFallback, cutoutFallback, transparentFallback,
                                 transparentShadowedFallback, transparentFadeFallback,
                                 transparentFadeShadowedFallback, transparentDitheredFallback
                                 };
 
-        string[] chosenShaderBlend = {cutoutBlend, transparentBlend,
+        string[] chosenShaderBlend = {cutoutBlend, cutoutBlend, transparentBlend,
                                 transparentShadowedBlend, transparentFadeBlend,
                                 transparentFadeShadowedBlend, transparentDitheredBlend
                                 };
 
-        string[] chosenShaderPragma = {cutoutPragma, transparentPragma,
+        string[] chosenShaderPragma = {cutoutPragma, cutoutPragma, transparentPragma,
                                 transparentShadowedPragma, transparentFadePragma,
                                 transparentFadeShadowedPragma, transparentDitheredPragma
                                 };
@@ -407,6 +440,19 @@ public class XSShaderGenerator : EditorWindow
             {
                 writer.WriteLine(chosenShaderPragma[index].ToString());
             }
+            else if(lines[i].Contains("!outlinepass"))
+            {
+                if(outlined)
+                {
+                    if(chosenShaderStringName[index].ToString() != cutoutOutlinedStringName)
+                    {
+                         writer.WriteLine("");
+                    }
+                    else{
+                         writer.WriteLine(outlinePass);
+                    } 
+                }
+            }
             else
             {
                 writer.WriteLine(lines[i]);
@@ -438,7 +484,9 @@ public class XSShaderGenerator : EditorWindow
                                     "Building Compute shaders...",
                                     "Are you even reading these?",
                                     "Future Proofing...",
-                                    "OwO"
+                                    "OwO...",
+                                    "Weong is a Watermelon...",
+                                    "Distant slapping noises..."
                                     };
         
         int stringIndex = Random.Range(0, loadingStrings.Length);

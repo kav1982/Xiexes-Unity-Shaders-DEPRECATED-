@@ -19,7 +19,7 @@ public class XSGradientEditor : EditorWindow
     }
     public resolutions res;
 
-    [MenuItem("Xiexe/Tools/Gradient Editor")]
+    [MenuItem("Tools/Xiexe/XSToon/Gradient Editor")]
     // Use this for initialization
     static public void Init()
     {

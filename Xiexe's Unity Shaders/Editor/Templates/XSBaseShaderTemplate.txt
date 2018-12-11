@@ -2,7 +2,7 @@ Shader !name
 {
 	Properties
 	{
-		[Toggle]_UseUV2forNormalsSpecular("Use UV2 for Normals/Specular", Float) = 0
+		//[Toggle]_UseUV2forNormalsSpecular("Use UV2 for Normals/Specular", Float) = 0
 
 	//Enums for all options
 [Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
@@ -19,8 +19,17 @@ Shader !name
 		[Enum(On,0,Off,1)]_UseSpecular("Use Specular", Int) = 1
 		[Enum(On,0,Off,1)] _Emissive("Emissive?", Int) = 1
 		[Enum(Yes,0, No,1)] _ScaleWithLight("ScaleEmissWithLight", Int) = 1
+
 		[Enum(UV1,0, UV2,1)] _EmissUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _DetailNormalUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _NormalUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _MetallicUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _SpecularUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)] _SpecularPatternUv2("Emiss UV", Int) = 0
+		[Enum(UV1,0, UV2,1)]_AOUV2("Ao UV", int) = 0
+
 		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
+		[Enum(Basic, 0, Integrated, 1)]_AORAMPMODE_ON("", Int) = 0
 		
 	//Textures
 		_MainTex("Main Tex", 2D) = "white" {}
@@ -42,6 +51,7 @@ Shader !name
 
 		_SpecularPatternTiling("Specular Pattern Tiling", Vector) = (20,20,0,0)
 		_Color("Color Tint", Color) = (1,1,1,1)
+		_OcclusionColor("Occlusion Color", Color) = (0,0,0,0)
 		_SubsurfaceColor("Subsurface Color", Color) = (0,0,0,0)
 		_NormalTiling("NormalTiling", Vector) = (1,1,0,0)
 		_SpecularIntensity("Specular Intensity", Float) = 0
@@ -94,7 +104,20 @@ Shader !name
 		[Enum(None,0,Alpha,1,Red,8,Green,4,Blue,2,RGB,14,RGBA,15)] _colormask("Color Mask", Int) = 15 
 
 		_RampBaseAnchor("RampBaseAnchor", Range(0,1)) = 0.5
-		_EmissionPower("", Range(1,2)) = 1
+		_EmissionPower("", Range(1,5)) = 1
+
+		_OutlineThickness("Outline Thickness", Range(0,1)) = 0.1
+		_OutlineColor("Outline Color", Color) = (0,0,0,1) 
+		_OutlineTextureMap("Outline Masks (R, G, B)", 2D) = "white" {}
+
+		
+		//Toggles to replace keywords
+		[Toggle]_ANISTROPIC_ON("", Int) = 0
+		[Toggle]_PBRREFL_ON("", Int) = 0
+		[Toggle]_MATCAP_ON("", Int) = 0
+		[Toggle]_MATCAP_CUBEMAP_ON("", Int) = 0
+		[Toggle]_WORLDSHADOWCOLOR_ON("", Int) = 0
+		[Toggle]_MIXEDSHADOWCOLOR_ON("", Int) = 0
 	}
 
 	SubShader
@@ -138,10 +161,10 @@ Shader !name
 		
 		//!pragma
 
-		#pragma shader_feature _ _ANISTROPIC_ON
+		//#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
-		#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
-		#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
+		//#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
+		//#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
 		ENDCG
 
 		
@@ -155,11 +178,13 @@ Shader !name
 			#pragma fragment frag
 			#pragma target 3.0
 			#pragma multi_compile_shadowcaster
-			#pragma multi_compile UNITY_PASS_SHADOWCASTER
+			#pragma multi_compile XS_SHADOWCASTER_PASS
 			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
 			#include "CGInc/XSShadowCaster.cginc"
 			ENDCG
 		}
+
+		//!outlinepass
 	}
     !fallback
 	CustomEditor "XSToonEditor"

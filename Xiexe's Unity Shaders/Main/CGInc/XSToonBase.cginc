@@ -4,7 +4,7 @@
 		#include "UnityCG.cginc"
 		#include "Lighting.cginc"
 		#pragma target 3.0
-		#ifdef UNITY_PASS_SHADOWCASTER
+		#if defined(XS_SHADOWCASTER_PASS) || defined(XS_OUTLINE_PASS)
 			#undef INTERNAL_DATA
 			#undef WorldReflectionVector
 			#undef WorldNormalVector
@@ -12,17 +12,18 @@
 			#define WorldReflectionVector(data,normal) reflect (data.worldRefl, half3(dot(data.internalSurfaceTtoW0,normal), dot(data.internalSurfaceTtoW1,normal), dot(data.internalSurfaceTtoW2,normal)))
 			#define WorldNormalVector(data,normal) fixed3(dot(data.internalSurfaceTtoW0,normal), dot(data.internalSurfaceTtoW1,normal), dot(data.internalSurfaceTtoW2,normal))
 		#endif
+
 		struct Input
 		{
 			float2 uv_texcoord;
 			float3 worldNormal;
 			float3 worldRefl;
 			float3 viewDir;
-			INTERNAL_DATA
 			float2 uv2_texcoord2;
 			float3 worldPos;
 			float4 screenPos;
 			float3 tangentDir;
+			INTERNAL_DATA
 		};
 
 		struct SurfaceOutputCustomLightingCustom
@@ -67,6 +68,7 @@
 		float4 _EmissiveColor;
 		float4 _SimulatedLightDirection;
 	 	float4 _Color;
+		float4 _OcclusionColor;
 		float3 _RimColor;
 		float3 _SSSCol;
 		float2 _NormalTiling;
@@ -107,18 +109,32 @@
 		float _ThicknessMapPower;
 		float _RampBaseAnchor;
 		float _ScaleWithLight;
-		float _EmissUv2;
 		float _EmissTintToColor;
 		float _EmissionPower;
 
+		int _EmissUv2;
+		int _DetailNormalUv2;
+		int _NormalUv2;
+		int _MetallicUv2;
+		int _SpecularUv2;
+		int _SpecularPatternUv2;
+		int _AOUV2;
+
+		int _ANISTROPIC_ON;
+		int _PBRREFL_ON;
+		int _MATCAP_ON;
+		int _MATCAP_CUBEMAP_ON;
+		int _WORLDSHADOWCOLOR_ON;
+		int _MIXEDSHADOWCOLOR_ON;
+		int _AORAMPMODE_ON;
+
 	//Custom Helper Functions		
-		float4x4 tMatrixFunc(float3 x, float3 y, float3 z)
+		float2 matcapSample(float3 worldUp, float3 viewDirection, float3 normalDirection)
 		{
-			float4x4 tMatrix = {x.x,y.x,z.x,0,
-								x.y,y.y,z.y,0,
-								x.z,y.z,z.z,0,
-								0  ,0  ,0  ,0};
-			return tMatrix;					
+			half3 worldViewUp = normalize(worldUp - viewDirection * dot(viewDirection, worldUp));
+			half3 worldViewRight = normalize(cross(viewDirection, worldViewUp));
+			half2 matcapUV = half2(dot(worldViewRight, normalDirection), dot(worldViewUp, normalDirection)) * 0.5 + 0.5;
+			return matcapUV;				
 		}
 
 		float3 StereoWorldViewDir( float3 worldPos )
@@ -188,14 +204,21 @@
 		//Set up UVs
 				float2 texcoord1 = i.uv_texcoord;
 				float2 texcoord2 = i.uv2_texcoord2;
+
 				float2 UVSetEmission = lerp(texcoord1, texcoord2, _EmissUv2);
-				float2 UVSet = lerp(texcoord1,texcoord2,_UseUV2forNormalsSpecular);
+				float2 UVSetNormal = lerp(texcoord1, texcoord2, _NormalUv2);
+				float2 UVSetDetailNormal = lerp(texcoord1, texcoord2, _DetailNormalUv2);
+				float2 UVSetMetallic = lerp(texcoord1, texcoord2, _MetallicUv2);
+				float2 UVSetSpecular = lerp(texcoord1, texcoord2, _SpecularUv2);
+				float2 UVSetSpecularPattern = lerp(texcoord1, texcoord2, _SpecularPatternUv2);
+				float2 UVSetAO = lerp(texcoord1, texcoord2, _AOUV2);
+
 				float2 uv_MainTex = i.uv_texcoord * _MainTex_ST.xy + _MainTex_ST.zw;
-				float2 uv_Normal = UVSet * _Normal_ST.xy + _Normal_ST.zw;
-				float2 uv_DetailNormal = UVSet * _DetailNormal_ST.xy + _DetailNormal_ST.zw;
-				float2 uv_Specular = UVSet * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
-				float2 uv_SpecularPattern = UVSet * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
-				float2 uv_EmissiveTex = i.uv2_texcoord2;// * _EmissiveTex_ST.xy + _EmissiveTex_ST.zw;
+				float2 uv_Normal = UVSetNormal * _Normal_ST.xy + _Normal_ST.zw;
+				float2 uv_DetailNormal = UVSetDetailNormal * _DetailNormal_ST.xy + _DetailNormal_ST.zw;
+				float2 uv_Specular = UVSetSpecular * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
+				float2 uv_SpecularPattern = UVSetSpecularPattern * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
+				float2 uv_MetallicRough = UVSetMetallic * _MetallicMap_ST.xy + _MetallicMap_ST.zw;
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
@@ -269,8 +292,12 @@
 
 		//Do Recieved Shadows and lighting
 				//We don't need to use the rounded NdL for this, as all it's doing is remapping for our shadowramp. The end result should be the same with either.
-				float3 occlusionMap = UNITY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, _MainTex,i.uv_texcoord) ;
-				float remappedRamp = (NdL * 0.5 + 0.5) * (occlusionMap.x + ((1-occlusionMap.x) * (1-_OcclusionStrength)));
+				float3 occlusionMap = UNITY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, _MainTex, UVSetAO);
+				float remappedRamp = (NdL * 0.5 + 0.5);
+				if(_AORAMPMODE_ON == 1)
+				{
+					remappedRamp *= (occlusionMap.x + ((1-occlusionMap.x) * (1-_OcclusionStrength)));
+				}
 				// #if DIRECTIONAL
 				// 	remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
 				// #else
@@ -291,62 +318,74 @@
 				//Checked if we're in baked or not and use the correct values for shadowing based on that. 
 				if (light_Env != 0) 
 				{
-					#if _WORLDSHADOWCOLOR_ON
+					if(_WORLDSHADOWCOLOR_ON == 1)
+					{
 						finalShadow = saturate((rampAvg * attenuation) - (1-shadowRamp.r));
 						lightColor = lightColor * finalShadow;
 						finalLight = lightColor + indirectColor;
-					#else
+					}
+					else
+					{
 						float3 rampBaseColor = tex2D(_ShadowRamp, float2(_RampBaseAnchor,_RampBaseAnchor));
 						#if defined(DIRECTIONAL)
 							float3 lightAtten = attenuation + rampBaseColor;
 							finalShadow = min(saturate(lightAtten), shadowRamp.xyz);
 							lightColor = lightColor;
-							#if _MIXEDSHADOWCOLOR_ON
+							
+							if(_MIXEDSHADOWCOLOR_ON == 1)
 								finalLight = (indirectColor + lightColor) * finalShadow;
-							#else
+							else
 								finalLight = (indirectAvg + lightColor) * finalShadow;
-							#endif
+
 						#else
 							finalShadow = saturate(((shadowRamp * attenuation * 2) - (1-shadowRamp.r)));
 							lightColor = lightColor * (finalShadow + shadowRamp.rgb);
 							float finalLength = Luminance(finalShadow);
-							#if _MIXEDSHADOWCOLOR_ON
+							
+							if(_MIXEDSHADOWCOLOR_ON == 1)
 								finalLight = (lightColor + indirectColor) * finalLength;
-							#else
+							else
 								finalLight = (indirectAvg + lightColor) * finalLength;
-							#endif
+
 						#endif
-					#endif
+					}
 				}
 				else{
-					#if _WORLDSHADOWCOLOR_ON
+					if(_WORLDSHADOWCOLOR_ON == 1)
 							finalLight = indirectColor * rampAvg;
-					#else
-						#if _MIXEDSHADOWCOLOR_ON
+					else
+					{
+						if (_MIXEDSHADOWCOLOR_ON == 1)
 							finalLight = indirectColor * shadowRamp;
-						#else
+						else
 							finalLight = indirectAvg * shadowRamp;
-						#endif
-					#endif
+					}
 				}
 
 				float4 MainTex = pow(UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex ), _Saturation);
 				float4 MainColor = MainTex * _Color;
+				if(_AORAMPMODE_ON == 0)
+				{
+					MainColor = lerp(MainColor * _OcclusionColor, MainColor, occlusionMap.r * _OcclusionStrength);
+				}
 			
 			//Specular
 				float4 specularMap = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularMap, _MainTex, uv_Specular);
-				float specularPatternTex = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularPattern, _MainTex,(((UVSet - float2( 0.5,0.5)) * uv_SpecularPattern) + float2(0.5,0.5))).r;
+				float specularPatternTex = UNITY_SAMPLE_TEX2D_SAMPLER(_SpecularPattern, _MainTex, uv_SpecularPattern).r;
 				float3 specularHighlight = float3(0,0,0);
-					#ifdef _ANISTROPIC_ON
+					if (_ANISTROPIC_ON == 1)
+					{
 						//Anistropic
 							float smooth = saturate(D_GGXAnisotropic(tdh, bdh, NdH, _anistropicAX * 0.1, _anistropicAY * 0.1));
 							float sharp = (round(smooth) * 2) / 2;
 							specularHighlight = lerp(smooth, sharp, _SpecularStyle);
-						#else
+					}
+					else
+					{
 						//Dot	
 							float reflectionUntouched = saturate(pow(RdV, _SpecularArea * 128));
 							specularHighlight = lerp(reflectionUntouched, round(reflectionUntouched),  _SpecularStyle);
-						#endif
+					}
 
 				float specularRefl = specularMap.g * specularPatternTex * _SpecularIntensity * 2 * specularHighlight;
 			//--
@@ -367,40 +406,45 @@
 				float3 reflectionDir = reflect(-light_Dir, worldNormal);
 
 			//PBR
-				#ifdef _PBRREFL_ON
-					metalMap = tex2D(_MetallicMap, uv_MainTex) * _Metallic;
-					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
-					float roughness = saturate((_ReflSmoothness * (roughMap.r)));
-					float4 envSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectedDir, roughness * 6);
+				if(_PBRREFL_ON == 1)
+				{
+					metalMap = tex2D(_MetallicMap, uv_MetallicRough);
+					metalMap.rgb *= _Metallic;
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
+					float roughness = (1-metalMap.a * _ReflSmoothness);
+					roughness *= 1.7 - 0.7 * roughness;
+					float4 envSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectedDir, roughness * UNITY_SPECCUBE_LOD_STEPS);
 					reflection = DecodeHDR(envSample, unity_SpecCube0_HDR);
 					
 				// if a reflection probe doesn't exist, fill it with our fallback instead.	
 					if (any(reflection.xyz) == 0)
 						{
-							reflection = texCUBElod(_BakedCube, float4(reflectedDir, roughness * 6));
+							reflection = texCUBElod(_BakedCube, float4(reflectedDir, roughness * UNITY_SPECCUBE_LOD_STEPS));
 						}
-				#endif
+				}
 			//--
 
 			//Matcap	
 				//Note: This matcap is intended for VR. 
-				#ifdef _MATCAP_ON
-					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
-					float3 sampleY = float3(0,1,0);
-					float3 VcrossY = cross(viewDir, sampleY);
-					float3 VCYcrossV = cross(VcrossY, viewDir);
-					float4x4 tmat = tMatrixFunc(viewDir, VcrossY, VCYcrossV);
-					float4 remapUV = mul(worldNormal, tmat);
-					remapUV = remapUV * 0.5 + 0.5;
-					reflection = tex2Dlod(_MetallicMap, float4(remapUV.yz, 0, (_ReflSmoothness * 6)));
-				#endif
+				if(_MATCAP_ON == 1)
+				{
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
+					float3 upVector = float3(0,1,0);
+					float2 remapUV = matcapSample(upVector, viewDir, worldNormal);
+					reflection = tex2Dlod(_MetallicMap, float4(remapUV, 0, (_ReflSmoothness * UNITY_SPECCUBE_LOD_STEPS)));
+				}
 			//--
 
 			//Cubemap Baked
-				#ifdef _MATCAP_CUBEMAP_ON
-					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MainTex);
-					reflection = texCUBElod(_BakedCube, float4(reflectedDir, _ReflSmoothness * 6));
-				#endif
+				if(_MATCAP_CUBEMAP_ON == 1)
+				{
+					metalMap = tex2D(_MetallicMap, uv_MetallicRough);
+					metalMap.rgb *= _Metallic;
+					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
+					float roughness = (1-metalMap.a * _ReflSmoothness);
+					roughness *= 1.7 - 0.7 * roughness;
+					reflection = texCUBElod(_BakedCube, float4(reflectedDir, roughness * UNITY_SPECCUBE_LOD_STEPS));
+				}
 			//--	
 			#endif
 		//-----
@@ -412,17 +456,17 @@
 
 			//Add Reflections
 				#ifdef _REFLECTIONS_ON
-				
 				//Do PBR
-					#ifdef _PBRREFL_ON
+					if(_PBRREFL_ON == 1 || _MATCAP_CUBEMAP_ON == 1)		
+					{
 						float3 finalreflections = (reflection * (MainColor * 2));
 						finalColor = (MainColor * ((1-_Metallic * metalMap.r)));
 						finalColor += finalreflections;
-					#endif
+					}
 				//--
-
 				//Do Matcap
-					#if  defined(_MATCAP_ON) || defined(_MATCAP_CUBEMAP_ON)
+					if(_MATCAP_ON)
+					{
 						//Additive
 						if(_MatcapStyle == 0)
 						{
@@ -431,23 +475,26 @@
 						//Multiplicitive
 						if(_MatcapStyle == 1)
 						{
-							finalColor = MainColor * (reflection * _Metallic * (roughMap.r));
+							finalColor = lerp(MainColor, MainColor * reflection, roughMap.r * _Metallic);
 						}
 						//Subtractive
 						if(_MatcapStyle == 2)
 						{
 							finalColor = MainColor - (reflection * _Metallic * (roughMap.r));
 						} 
-					#endif
+					}
 				//--
-				
 				#endif
 			//--
 
 			//Emission
 				float4 emissive = _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER(_EmissiveTex, _MainTex, UVSetEmission) * lerp(MainColor, 1, _EmissTintToColor);
 				float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * _EmissionPower).z;
-				float scaleWithLight = _ScaleWithLight >= 1 ? 1 : saturate(pow(1-(emissPow), 2.2));
+				float emissiveScaled = saturate(pow(1-(emissPow), 2.2));
+				float scaleWithLight = _ScaleWithLight >= 1 ? 1 : emissiveScaled;
+				#if defined(POINT) || defined(SPOT)
+					scaleWithLight *= 0;
+				#endif
 				emissive *= scaleWithLight;
 			//--
 

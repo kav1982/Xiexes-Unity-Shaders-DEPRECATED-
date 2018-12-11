@@ -6,12 +6,26 @@ using System.IO;
 [InitializeOnLoad]
 public class XSStyles : MonoBehaviour
 {
-    public static string ver = "1.5";
+    public static string ver = "1.6";
+
+    //Help URLs
+    public static string mainURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.xh0nk8x7ws1g";
+    public static string normalsURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.j7qze9btrmw8";
+    public static string shadowsURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.8l0gi0hntyfs";
+    public static string rimlightURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.tpxp2jrhrhxp";
+    public static string emissionsURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.zc983jrwb5x4";
+    public static string specularURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.gyu8l75mbtdq";
+    public static string reflURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.yqzg9axi3gi";
+    public static string sssURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.j2nk83f6azph";
+    public static string outlineURL = "https://docs.google.com/document/d/1xJ4PID_nwqVm_UCsO2c2gEdiEoWoCGeM_GDK_L8-aZE/edit#bookmark=id.jpaf9t25in8p";
+
+    public static string[] patrons = {"Wandering Youth", "Salt Queen", "Q", "NepsyNeptune", "Kurisu", "xXxEdgeLord69MSxXx"};
+
     public static string uiPath;
     private static GUISkin skin;
 
     [UnityEditor.Callbacks.DidReloadScripts]
-    private static void setupIcons()
+    private static void setupIconsOnReload()
     {
 
         uiPath = XSStyles.findAssetPath(uiPath) + "/Editor/Resources/";
@@ -23,7 +37,14 @@ public class XSStyles : MonoBehaviour
             skin = (GUISkin)AssetDatabase.LoadAssetAtPath<GUISkin>(uiPath + "XSGuiSkin.guiskin");
         }
 
-//        Debug.Log(uiPath);
+    }
+
+    public static void setupIcons()
+    {
+        if (skin == null){
+            uiPath = XSStyles.findAssetPath(uiPath) + "/Editor/Resources/";
+            skin = (GUISkin)AssetDatabase.LoadAssetAtPath<GUISkin>(uiPath + "XSGuiSkin.guiskin");
+        }
     }
 
     public static class Styles
@@ -52,12 +73,21 @@ public class XSStyles : MonoBehaviour
         });
     }
 
+    public static void doLabelLeft(string text)
+    {
+        GUILayout.Label(text, new GUIStyle(EditorStyles.label)
+        {
+            alignment = TextAnchor.MiddleLeft,
+            wordWrap = true,
+            fontSize = 12
+        });
+    }
 
     public static void doLabelSmall(string text)
     {
         GUILayout.Label(text, new GUIStyle(EditorStyles.label)
         {
-            alignment = TextAnchor.LowerLeft,
+            alignment = TextAnchor.MiddleLeft,
             wordWrap = true,
             fontSize = 10
         });
@@ -131,6 +161,19 @@ public class XSStyles : MonoBehaviour
         GUILayout.EndHorizontal();
     }
 
+    static public void CallResetAdv(Material material)
+    {
+            material.SetFloat("_colormask", 15);
+            material.SetFloat("_Stencil", 0);
+            material.SetFloat("_StencilComp", 0);
+            material.SetFloat("_StencilOp", 0);
+            material.SetFloat("_StencilFail", 0);
+            material.SetFloat("_StencilZFail", 0);
+            material.SetFloat("_ZWrite", 1);
+            material.SetFloat("_ZTest", 4);
+            material.SetFloat("_UseUV2forNormalsSpecular", 0);
+            material.SetFloat("_RampBaseAnchor", 0.5f);
+    }
     //------
 
     //Help Box
@@ -146,6 +189,14 @@ public class XSStyles : MonoBehaviour
         GUILine(new Color(.3f, .3f, .3f), 1);
         GUILine(new Color(.9f, .9f, .9f), 1);
         GUILayout.Space(4);
+    }
+
+    static public void SeparatorThin()
+    {
+        GUILayout.Space(2);
+        GUILine(new Color(.1f, .1f, .1f), 1f);
+        GUILine(new Color(.3f, .3f, .3f), 1f);
+        GUILayout.Space(2);
     }
 
     static public void SeparatorBig()
@@ -177,20 +228,19 @@ public class XSStyles : MonoBehaviour
     }
     // --------------
 
-
-
     //Help Buttons
-    public static void helpPopup(bool showBox, string title, string message, string button)
+    public static void helpPopup(string url)//bool showBox, string title, string message, string button)
     {
         GUI.skin = skin;
         if (GUILayout.Button("", "helpButton", GUILayout.Width(16), GUILayout.Height(16)))
         {
-            showBox = true;
-            if (showBox == true)
-            {
-                EditorUtility.DisplayDialog(title,
-                                            message, button);
-            }
+            Application.OpenURL(url);
+            // showBox = true;
+            // if (showBox == true)
+            // {
+            //     EditorUtility.DisplayDialog(title,
+            //                                 message, button);
+            // }
         }
     }
 
@@ -237,5 +287,5 @@ public class XSStyles : MonoBehaviour
             Application.OpenURL("https://www.patreon.com/xiexe");
         }
     }
-
+    
 }

@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 043ad703de0591944802f34ca4db9b83
+timeCreated: 1541032560
+licenseType: Free
+ShaderImporter:
+  defaultTextures:
+  - _ShadowRamp: {fileID: 2800000, guid: 516133a9f844ad84d8bf8ebbaeaa13cf, type: 3}
+  - _SpecularMap: {instanceID: 0}
+  - _SpecularPattern: {instanceID: 0}
+  - _MetallicMap: {instanceID: 0}
+  - _RoughMap: {instanceID: 0}
+  - _BakedCube: {fileID: 8900000, guid: 400c139eefcba334d88fae7b76fd0322, type: 3}
+  - _MainTex: {instanceID: 0}
+  - _Normal: {instanceID: 0}
+  - _EmissiveTex: {instanceID: 0}
+  - _texcoord2: {instanceID: 0}
+  - _texcoord: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

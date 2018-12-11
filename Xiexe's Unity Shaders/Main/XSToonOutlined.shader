@@ -1,7 +1,7 @@
 //The base of this shader was made in amplify - however it has been heavily altered. 
 //If you open this in amplify it will kill the shader, don't do it.
 
-Shader "Xiexe/Toon/XSToon"
+Shader "Xiexe/Toon/XSToonOutlined"
 {
 	Properties
 	{
@@ -30,7 +30,7 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(UV1,0, UV2,1)] _SpecularUv2("Emiss UV", Int) = 0
 		[Enum(UV1,0, UV2,1)] _SpecularPatternUv2("Emiss UV", Int) = 0
 		[Enum(UV1,0, UV2,1)]_AOUV2("Ao UV", int) = 0
-
+		
 		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
 		[Enum(Basic, 0, Integrated, 1)]_AORAMPMODE_ON("", Int) = 0
 		
@@ -190,20 +190,19 @@ Shader "Xiexe/Toon/XSToon"
 		}
 		
 		
-		// Pass
-		// {
-		// 	Name "Outline"
-		// 	Tags{ "LightMode"="ForwardBase" "IgnoreProjector" = "True" }
-		// 	ZWrite Off
-		// 	Cull Front
-		// 	CGPROGRAM
-		// 	#pragma vertex vert
-		// 	#pragma fragment frag
-		// 	#pragma target 3.0
-		// 	#pragma multi_compile XS_OUTLINE_PASS
-		// 	#include "CGInc/XSOutlinePass.cginc"
-		// 	ENDCG
-		// }
+		Pass
+		{
+			Name "Outline"
+			Tags{"LightMode"="ForwardBase" "IgnoreProjector" = "True" }
+			Cull Front
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma target 3.0
+			#pragma multi_compile XS_OUTLINE_PASS
+			#include "CGInc/XSOutlinePass.cginc"
+			ENDCG
+		}
 	}
 	Fallback "Diffuse"
 	CustomEditor "XSToonEditor"
