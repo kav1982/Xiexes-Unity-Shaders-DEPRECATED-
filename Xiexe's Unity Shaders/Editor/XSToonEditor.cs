@@ -51,6 +51,7 @@ public class XSToonEditor : ShaderGUI
         public static GUIContent occlusionMap = new GUIContent("Occlusion Map", "Occlusion map. Used to bake shadowing into areas through various methods. Black would be an area with forced shadows - white would be an area without.");
         public static GUIContent thicknessMap = new GUIContent("Thickness Map", "Used to show 'Thickness' in an area by stopping light from coming through. Black to white texture, Black means less light comes through. Only affects Subsurface Scattering.");
         public static GUIContent outlineTex = new GUIContent("Outline Masks", "The Outline Mask is used to control where the outlines can show, and the width of the outline. Setting this to fully black will make the outline completely gone, where fully white would be full width.");
+        public static GUIContent DitherTexture = new GUIContent("Dither Pattern", "Used to control the pattern that the Dithering makes.");
     }
 
     void DoFooter()
@@ -144,6 +145,9 @@ public class XSToonEditor : ShaderGUI
 	MaterialProperty _SpecularUv2;
 	MaterialProperty _SpecularPatternUv2;
     MaterialProperty _AOUV2;
+    MaterialProperty _LitOutline;
+    MaterialProperty _DitherPattern;
+    MaterialProperty _DitherPatternScale;
 
     public Texture ramp;
 
@@ -164,98 +168,107 @@ public class XSToonEditor : ShaderGUI
     static bool advancedSettings = false;
     static bool rimlighting = false;
 
+    //static bool disableOutlinePass = false;
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
     {
         XSStyles.setupIcons();
         Material material = materialEditor.target as Material;
         {
             //Find all the properties within the shader
-            shadowRamp = ShaderGUI.FindProperty("_ShadowRamp", props);
-            specMap = ShaderGUI.FindProperty("_SpecularMap", props);
-            specPattern = ShaderGUI.FindProperty("_SpecularPattern", props);
-            tint = ShaderGUI.FindProperty("_Color", props);
-            mainTex = ShaderGUI.FindProperty("_MainTex", props);
-            normal = ShaderGUI.FindProperty("_Normal", props);
-            specIntensity = ShaderGUI.FindProperty("_SpecularIntensity", props);
-            specArea = ShaderGUI.FindProperty("_SpecularArea", props);
-            rimWidth = ShaderGUI.FindProperty("_RimWidth", props);
-            rimIntensity = ShaderGUI.FindProperty("_RimIntensity", props);
-            emissiveToggle = ShaderGUI.FindProperty("_Emissive", props);
-            emissiveTex = ShaderGUI.FindProperty("_EmissiveTex", props);
-            emissiveColor = ShaderGUI.FindProperty("_EmissiveColor", props);
-            alphaCutoff = ShaderGUI.FindProperty("_Cutoff", props);
-            culling = ShaderGUI.FindProperty("_Culling", props);
-            rimStyle = ShaderGUI.FindProperty("_RimlightType", props);
-            advMode = ShaderGUI.FindProperty("_advMode", props);
-            reflSmooth = ShaderGUI.FindProperty("_ReflSmoothness", props);
-            metal = ShaderGUI.FindProperty("_Metallic", props);
-            metalMap = ShaderGUI.FindProperty("_MetallicMap", props);
-            roughMap = ShaderGUI.FindProperty("_RoughMap", props);
-            bakedCube = ShaderGUI.FindProperty("_BakedCube", props);
-            shadowType = ShaderGUI.FindProperty("_ShadowType", props);
-            reflType = ShaderGUI.FindProperty("_ReflType", props);
-            saturation = ShaderGUI.FindProperty("_Saturation", props);
-            useRefl = ShaderGUI.FindProperty("_UseReflections", props);
-            matcapStyle = ShaderGUI.FindProperty("_MatcapStyle", props);
-            stylizedType = ShaderGUI.FindProperty("_StylizedReflStyle", props);
-            rampColor = ShaderGUI.FindProperty("_RampColor", props);
-            rimColor = ShaderGUI.FindProperty("_RimColor", props);
-            aX = ShaderGUI.FindProperty("_anistropicAX", props);
-            aY = ShaderGUI.FindProperty("_anistropicAY", props);
-            specStyle = ShaderGUI.FindProperty("_SpecularStyle", props);
-            detailNormal = ShaderGUI.FindProperty("_DetailNormal", props);
-            detailMask = ShaderGUI.FindProperty("_DetailMask", props);
-            normalStrength = ShaderGUI.FindProperty("_NormalStrength", props);
-            detailNormalStrength = ShaderGUI.FindProperty("_DetailNormalStrength", props);
-            occlusionMap = ShaderGUI.FindProperty("_OcclusionMap", props);
-            occlusionStrength = ShaderGUI.FindProperty("_OcclusionStrength", props);
-            ThicknessMap = ShaderGUI.FindProperty("_ThicknessMap", props); 
-            SSSDist = ShaderGUI.FindProperty("_SSSDist", props);
-            SSSPow = ShaderGUI.FindProperty("_SSSPow", props);
-            SSSIntensity = ShaderGUI.FindProperty("_SSSIntensity", props);
-            SSSCol = ShaderGUI.FindProperty("_SSSCol", props);
-            invertThickness = ShaderGUI.FindProperty("_invertThickness", props);
-            ThicknessMapPower = ShaderGUI.FindProperty("_ThicknessMapPower", props);
-            UseSSS = ShaderGUI.FindProperty("_UseSSS", props); 
-            UseSpecular = ShaderGUI.FindProperty("_UseSpecular", props);
-            UseUV2Emiss = ShaderGUI.FindProperty("_EmissUv2", props);
-            EmissScaleWithLight = ShaderGUI.FindProperty("_ScaleWithLight", props);
-            EmissTintToColor = ShaderGUI.FindProperty("_EmissTintToColor", props);
-            EmissionPower = ShaderGUI.FindProperty("_EmissionPower", props);
-            if (material.shader == Shader.Find("Xiexe/Toon/XSToonCutoutOutlined") || material.shader == Shader.Find("Xiexe/Toon/XSToonOutlined"))
-            {
-                OutlineColor = ShaderGUI.FindProperty("_OutlineColor", props);
-                OutlineThickness = ShaderGUI.FindProperty("_OutlineThickness", props);
-                OutlineTextureMap = ShaderGUI.FindProperty("_OutlineTextureMap", props);
-                outlined = true;      
-            }
-            else 
-            {
-                outlined = false;
-                outlines = false;
-            }
-            _AORAMPMODE_ON = ShaderGUI.FindProperty("_AORAMPMODE_ON", props);
-            _OcclusionColor = ShaderGUI.FindProperty("_OcclusionColor", props);
+                shadowRamp = ShaderGUI.FindProperty("_ShadowRamp", props);
+                specMap = ShaderGUI.FindProperty("_SpecularMap", props);
+                specPattern = ShaderGUI.FindProperty("_SpecularPattern", props);
+                tint = ShaderGUI.FindProperty("_Color", props);
+                mainTex = ShaderGUI.FindProperty("_MainTex", props);
+                normal = ShaderGUI.FindProperty("_Normal", props);
+                specIntensity = ShaderGUI.FindProperty("_SpecularIntensity", props);
+                specArea = ShaderGUI.FindProperty("_SpecularArea", props);
+                rimWidth = ShaderGUI.FindProperty("_RimWidth", props);
+                rimIntensity = ShaderGUI.FindProperty("_RimIntensity", props);
+                emissiveToggle = ShaderGUI.FindProperty("_Emissive", props);
+                emissiveTex = ShaderGUI.FindProperty("_EmissiveTex", props);
+                emissiveColor = ShaderGUI.FindProperty("_EmissiveColor", props);
+                alphaCutoff = ShaderGUI.FindProperty("_Cutoff", props);
+                culling = ShaderGUI.FindProperty("_Culling", props);
+                rimStyle = ShaderGUI.FindProperty("_RimlightType", props);
+                advMode = ShaderGUI.FindProperty("_advMode", props);
+                reflSmooth = ShaderGUI.FindProperty("_ReflSmoothness", props);
+                metal = ShaderGUI.FindProperty("_Metallic", props);
+                metalMap = ShaderGUI.FindProperty("_MetallicMap", props);
+                roughMap = ShaderGUI.FindProperty("_RoughMap", props);
+                bakedCube = ShaderGUI.FindProperty("_BakedCube", props);
+                shadowType = ShaderGUI.FindProperty("_ShadowType", props);
+                reflType = ShaderGUI.FindProperty("_ReflType", props);
+                saturation = ShaderGUI.FindProperty("_Saturation", props);
+                useRefl = ShaderGUI.FindProperty("_UseReflections", props);
+                matcapStyle = ShaderGUI.FindProperty("_MatcapStyle", props);
+                stylizedType = ShaderGUI.FindProperty("_StylizedReflStyle", props);
+                rampColor = ShaderGUI.FindProperty("_RampColor", props);
+                rimColor = ShaderGUI.FindProperty("_RimColor", props);
+                aX = ShaderGUI.FindProperty("_anistropicAX", props);
+                aY = ShaderGUI.FindProperty("_anistropicAY", props);
+                specStyle = ShaderGUI.FindProperty("_SpecularStyle", props);
+                detailNormal = ShaderGUI.FindProperty("_DetailNormal", props);
+                detailMask = ShaderGUI.FindProperty("_DetailMask", props);
+                normalStrength = ShaderGUI.FindProperty("_NormalStrength", props);
+                detailNormalStrength = ShaderGUI.FindProperty("_DetailNormalStrength", props);
+                occlusionMap = ShaderGUI.FindProperty("_OcclusionMap", props);
+                occlusionStrength = ShaderGUI.FindProperty("_OcclusionStrength", props);
+                ThicknessMap = ShaderGUI.FindProperty("_ThicknessMap", props); 
+                SSSDist = ShaderGUI.FindProperty("_SSSDist", props);
+                SSSPow = ShaderGUI.FindProperty("_SSSPow", props);
+                SSSIntensity = ShaderGUI.FindProperty("_SSSIntensity", props);
+                SSSCol = ShaderGUI.FindProperty("_SSSCol", props);
+                invertThickness = ShaderGUI.FindProperty("_invertThickness", props);
+                ThicknessMapPower = ShaderGUI.FindProperty("_ThicknessMapPower", props);
+                UseSSS = ShaderGUI.FindProperty("_UseSSS", props); 
+                UseSpecular = ShaderGUI.FindProperty("_UseSpecular", props);
+                UseUV2Emiss = ShaderGUI.FindProperty("_EmissUv2", props);
+                EmissScaleWithLight = ShaderGUI.FindProperty("_ScaleWithLight", props);
+                EmissTintToColor = ShaderGUI.FindProperty("_EmissTintToColor", props);
+                EmissionPower = ShaderGUI.FindProperty("_EmissionPower", props);
+                if ( material.shader.name.Contains("Outlined") )//Shader.Find("Xiexe/Toon/XSToonCutoutOutlined") || material.shader == Shader.Find("Xiexe/Toon/XSToonOutlined") || material.shader == Shader.Find("Xiexe/Toon/XSToonTransparentDitheredOUTLINED"))
+                {
+                    OutlineColor = ShaderGUI.FindProperty("_OutlineColor", props);
+                    OutlineThickness = ShaderGUI.FindProperty("_OutlineThickness", props);
+                    OutlineTextureMap = ShaderGUI.FindProperty("_OutlineTextureMap", props);
+                    _LitOutline = ShaderGUI.FindProperty("_LitOutlines", props);
+                    outlined = true;      
+                }
+                else 
+                {
+                    outlined = false;
+                    outlines = false;
+                }
 
-            _DetailNormalUv2 = ShaderGUI.FindProperty("_DetailNormalUv2", props);
-            _NormalUv2 = ShaderGUI.FindProperty("_NormalUv2", props);
-            _MetallicUv2 = ShaderGUI.FindProperty("_MetallicUv2", props);
-            _SpecularUv2 = ShaderGUI.FindProperty("_SpecularUv2", props);
-            _SpecularPatternUv2 = ShaderGUI.FindProperty("_SpecularPatternUv2", props);
-            _AOUV2 = ShaderGUI.FindProperty("_AOUV2", props);
+                if (material.shader.name.Contains("Dithered") )
+                {
+                    _DitherPattern = ShaderGUI.FindProperty("_DitherPattern", props);
+                    _DitherPatternScale = ShaderGUI.FindProperty("_DitherPatternScale", props);
+                }
 
-            //advanced options
-            colorMask = ShaderGUI.FindProperty("_colormask", props);
-            stencil = ShaderGUI.FindProperty("_Stencil", props);
-            stencilComp = ShaderGUI.FindProperty("_StencilComp", props);
-            stencilOp = ShaderGUI.FindProperty("_StencilOp", props);
-            stencilFail = ShaderGUI.FindProperty("_StencilFail", props);
-            stencilZFail = ShaderGUI.FindProperty("_StencilZFail", props);
-            zwrite = ShaderGUI.FindProperty("_ZWrite", props);
-            ztest = ShaderGUI.FindProperty("_ZTest", props);
+                _AORAMPMODE_ON = ShaderGUI.FindProperty("_AORAMPMODE_ON", props);
+                _OcclusionColor = ShaderGUI.FindProperty("_OcclusionColor", props);
 
-            RampBaseAnchor = ShaderGUI.FindProperty("_RampBaseAnchor", props);
+                _DetailNormalUv2 = ShaderGUI.FindProperty("_DetailNormalUv2", props);
+                _NormalUv2 = ShaderGUI.FindProperty("_NormalUv2", props);
+                _MetallicUv2 = ShaderGUI.FindProperty("_MetallicUv2", props);
+                _SpecularUv2 = ShaderGUI.FindProperty("_SpecularUv2", props);
+                _SpecularPatternUv2 = ShaderGUI.FindProperty("_SpecularPatternUv2", props);
+                _AOUV2 = ShaderGUI.FindProperty("_AOUV2", props);
 
+                //advanced options
+                colorMask = ShaderGUI.FindProperty("_colormask", props);
+                stencil = ShaderGUI.FindProperty("_Stencil", props);
+                stencilComp = ShaderGUI.FindProperty("_StencilComp", props);
+                stencilOp = ShaderGUI.FindProperty("_StencilOp", props);
+                stencilFail = ShaderGUI.FindProperty("_StencilFail", props);
+                stencilZFail = ShaderGUI.FindProperty("_StencilZFail", props);
+                zwrite = ShaderGUI.FindProperty("_ZWrite", props);
+                ztest = ShaderGUI.FindProperty("_ZTest", props);
+
+                RampBaseAnchor = ShaderGUI.FindProperty("_RampBaseAnchor", props);
+            //
             //Show Properties in Inspector
             //materialEditor.ShaderProperty(, .displayName);   
 
@@ -288,10 +301,16 @@ public class XSToonEditor : ShaderGUI
                     EditorGUILayout.EndHorizontal();
                     GUI.skin = null;
                         materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
-
+                        materialEditor.TextureScaleOffsetProperty(mainTex);
+                //Dither
+                    if(material.shader.name.Contains("Dithered"))
+                    {
+                        materialEditor.TexturePropertySingleLine(Styles.DitherTexture, _DitherPattern);
+                        materialEditor.ShaderProperty(_DitherPatternScale, "Dither Pattern Size");
+                    }
                        
                 //cutoff
-                    if (material.shader == Shader.Find("Xiexe/Toon/XSToonCutout") || material.shader == Shader.Find("Xiexe/Toon/XSToonCutoutOutlined"))
+                    if (material.shader.name.Contains("Cutout")) //== Shader.Find("Xiexe/Toon/XSToonCutout") || material.shader == Shader.Find("Xiexe/Toon/XSToonCutoutOutlined"))
                     {
                         materialEditor.ShaderProperty(alphaCutoff, Styles.cutoutText);
                     }
@@ -309,6 +328,7 @@ public class XSToonEditor : ShaderGUI
                     if (outlines)
                     {
                         XSStyles.SeparatorThin();
+                        materialEditor.ShaderProperty(_LitOutline, "Outline Light Mode");
                         materialEditor.TexturePropertySingleLine(Styles.outlineTex, OutlineTextureMap);
                         materialEditor.ShaderProperty(OutlineColor, "Outline Color");
                         materialEditor.ShaderProperty(OutlineThickness, "Outline Scale");
@@ -618,6 +638,14 @@ public class XSToonEditor : ShaderGUI
                             // Reset ZWrite/ZTest
                         XSStyles.ResetAdv(material);
                         XSStyles.ResetAdvAll(material);
+
+                        // disable pass toggle 
+                        // disableOutlinePass = EditorGUILayout.Toggle("Disable Outline Pass", disableOutlinePass);
+                        // if(disableOutlinePass == true)
+                        //     material.SetShaderPassEnabled("Always", false);
+                        // else
+                        //     material.SetShaderPassEnabled("Always", true);
+            
                     }
                 }
                 if(advMode.floatValue == 0)

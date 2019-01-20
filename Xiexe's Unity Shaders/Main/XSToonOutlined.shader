@@ -33,6 +33,8 @@ Shader "Xiexe/Toon/XSToonOutlined"
 		
 		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
 		[Enum(Basic, 0, Integrated, 1)]_AORAMPMODE_ON("", Int) = 0
+
+		[Enum(Unlit, 0, Lit, 1)]_LitOutlines("", Int) = 1
 		
 		
 	//Textures
@@ -48,6 +50,8 @@ Shader "Xiexe/Toon/XSToonOutlined"
 		_BakedCube("Local Cubemap", Cube) = "black" {}
 		_EmissiveTex("Emissive Tex", 2D) = "white" {}
 		_OcclusionMap("AO Map", 2D) = "white" {}
+		_DitherPattern("Dither Pattern", 2D) = "white" {}
+		[IntRange]_DitherPatternScale("DitherScale", Range(8,64)) = 8
 
 		_OcclusionStrength("Occlusion Strength", Range(0,1)) = 1
 		_NormalStrength("Normal Strength", float) = 1
@@ -183,7 +187,7 @@ Shader "Xiexe/Toon/XSToonOutlined"
 			#pragma fragment frag
 			#pragma target 3.0
 			#pragma multi_compile_shadowcaster
-			#pragma multi_compile XS_SHADOWCASTER_PASS
+			#pragma multi_compile UNITY_PASS_SHADOWCASTER
 			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
 			#include "CGInc/XSShadowCaster.cginc"
 			ENDCG
@@ -193,7 +197,7 @@ Shader "Xiexe/Toon/XSToonOutlined"
 		Pass
 		{
 			Name "Outline"
-			Tags{"LightMode"="ForwardBase" "IgnoreProjector" = "True" }
+			Tags{"LightMode"="Always" "IgnoreProjector" = "True" }
 			Cull Front
 			CGPROGRAM
 			#pragma vertex vert

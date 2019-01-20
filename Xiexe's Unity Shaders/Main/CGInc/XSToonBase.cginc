@@ -4,7 +4,7 @@
 		#include "UnityCG.cginc"
 		#include "Lighting.cginc"
 		#pragma target 3.0
-		#if defined(XS_SHADOWCASTER_PASS) || defined(XS_OUTLINE_PASS)
+		#if defined(UNITY_PASS_SHADOWCASTER) || defined(XS_OUTLINE_PASS)
 			#undef INTERNAL_DATA
 			#undef WorldReflectionVector
 			#undef WorldNormalVector
@@ -53,6 +53,7 @@
 
 		sampler2D _MetallicMap;
 		sampler2D _ShadowRamp;
+		sampler2D _DitherPattern;
 		samplerCUBE _BakedCube;
 		float4 _MainTex_ST;
 		float4 _EmissiveTex_ST;
@@ -64,6 +65,7 @@
 		float4 _MetallicMap_ST;
 		float4 _RoughMap_ST;
 		float4 _BakedCube_ST;
+		float4 _DitherPattern_ST;
 
 		float4 _EmissiveColor;
 		float4 _SimulatedLightDirection;
@@ -83,7 +85,6 @@
 		float _RimlightType;
 		float _RampDir;
 	 	float _ShadowIntensity;
-		float _DitherScale;
 		float _ColorBanding;
 	 	float _ReflSmoothness;
 	 	float _Metallic;
@@ -112,6 +113,7 @@
 		float _EmissTintToColor;
 		float _EmissionPower;
 
+		int _DitherPatternScale;
 		int _EmissUv2;
 		int _DetailNormalUv2;
 		int _NormalUv2;
@@ -127,6 +129,7 @@
 		int _WORLDSHADOWCOLOR_ON;
 		int _MIXEDSHADOWCOLOR_ON;
 		int _AORAMPMODE_ON;
+		int _LitOutlines;
 
 	//Custom Helper Functions		
 		float2 matcapSample(float3 worldUp, float3 viewDirection, float3 normalDirection)
@@ -147,6 +150,16 @@
 			float3 worldViewDir = normalize((cameraPos - worldPos));
 			return worldViewDir;
 		}
+		
+		// float hash( float2 i ) {
+		// 	return frac( 1.0e4 * sin( 17.0*i.x + 0.1*i.y ) *
+		// 	( 0.1 + abs( sin( 13.0*i.y + i.x )))
+		// 	);
+		// }
+
+		// float hash3D( float3 i ) {
+		// 	return hash( float2( hash( i.xy ), i.z ) );
+		// }
 
 		inline float Dither8x8Bayer( int x, int y )
 		{
@@ -219,6 +232,7 @@
 				float2 uv_Specular = UVSetSpecular * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
 				float2 uv_SpecularPattern = UVSetSpecularPattern * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
 				float2 uv_MetallicRough = UVSetMetallic * _MetallicMap_ST.xy + _MetallicMap_ST.zw;
+				//float2 uv_DitherPattern = TRANSFORM_TEX(i.uv_texcoord, _DitherPattern);
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
@@ -524,11 +538,21 @@
 			//dithered
 				#ifdef dithered
 					float2 screenPos = i.screenPos.xy;
-					float2 pos = screenPos / i.screenPos.w;
-					pos *= _ScreenParams.xy; // pixel position
 
-					float dither = Dither8x8Bayer(fmod(pos.x, 8), fmod(pos.y, 8));
+					float2 pos = screenPos / i.screenPos.w;
+					pos.x *= _ScreenParams.x/_ScreenParams.y;
+					#if UNITY_SINGLE_PASS_STEREO
+						pos *= 2; // Quick hack to make sure the pattern is the same size in VR and out of VR
+					#endif
+
+					pos *= _DitherPatternScale; //scale the dithering pattern
+
+					float dither = tex2Dlod(_DitherPattern, float4(pos, 0, 0) ).r;
+					dither = round(dither * 64) / 64; // how many steps the dithering should take from 0% to 100%
+					dither = (MainTex.a * _Color.a) <= 0 ? 1 : dither; // Make sure if the alpha is 0 we're not showing any more of the texture
+
 					clip((MainTex.a * _Color.a) - dither);
+
 				#endif
 			//--
 		//-----

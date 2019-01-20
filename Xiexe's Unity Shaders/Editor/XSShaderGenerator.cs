@@ -23,6 +23,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadeName = "XSToonFade";
     private static string transparentFadeShadowedName = "XSToonFadeShadowed";
     private static string transparentDitheredName = "XSToonTransparentDithered";
+    private static string transparentDitheredOutlinedName = "XSToonTransparentDitheredOutlined";
 
     //Strings for Name
     private static string cutoutStringName = "Shader \"Xiexe/Toon/XSToonCutout\"";
@@ -32,6 +33,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadeStringName = "Shader \"Xiexe/Toon/XSToonFade\"";
     private static string transparentFadeShadowedStringName = "Shader \"Xiexe/Toon/XSToonFadeShadowed\"";
     private static string transparentDitheredStringName = "Shader \"Xiexe/Toon/XSToonTransparentDithered\"";
+    private static string transparentDitheredOutlinedStringName = "Shader \"Xiexe/Toon/XSToonTransparentDitheredOutlined\"";
 
     //Strings for Tags
     private static string cutoutTags = "	Tags{ \"RenderType\" = \"TransparentCutout\"  \"Queue\" = \"AlphaTest\" \"IsEmissive\" = \"true\"}";
@@ -40,6 +42,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadeTags = "	Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"Transparent\" \"IsEmissive\" = \"true\"}";
     private static string transparentFadeShadowedTags = "	Tags{ \"RenderType\" = \"Transparent\"  \"Queue\" = \"AlphaTest+49\" \"IsEmissive\" = \"true\"}";
     private static string transparentDitheredTags = "	Tags{ \"RenderType\" = \"TransparentCutout\"  \"Queue\" = \"AlphaTest\" \"IsEmissive\" = \"true\"}";
+    private static string transparentDitheredOutlinedTags = "	Tags{ \"RenderType\" = \"TransparentCutout\"  \"Queue\" = \"AlphaTest\" \"IsEmissive\" = \"true\"}";
 
     //Strings for RenderMode
     private static string cutoutRender = "	#define cutout";
@@ -48,6 +51,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadeRender = "	#define alphablend";
     private static string transparentFadeShadowedRender = "	#define alphablend";
     private static string transparentDitheredRender = "	#define dithered";
+    private static string transparentDitheredOutlinedRender = "	#define dithered";
 
     //Strings for Fallback
     private static string cutoutFallback = "	Fallback \"Transparent/Cutout/Diffuse\"";
@@ -56,6 +60,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadeFallback = "	Fallback \"Transparent/Diffuse\"";
     private static string transparentFadeShadowedFallback = "	Fallback \"Transparent/Diffuse\"";
     private static string transparentDitheredFallback = "	Fallback \"Transparent/Cutout/Diffuse\"";
+    private static string transparentDitheredOutlinedFallback = "	Fallback \"Transparent/Cutout/Diffuse\"";
 
     //Strings for Pragma
     private static string cutoutPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
@@ -64,6 +69,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadePragma = "	#pragma surface surf StandardCustomLighting keepalpha nometa alpha:fade";
     private static string transparentFadeShadowedPragma = "	#pragma surface surf StandardCustomLighting keepalpha nometa alpha:fade";
     private static string transparentDitheredPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
+    private static string transparentDitheredOutlinedPragma = "	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa";
 
     //Strings for Blend
     private static string cutoutBlend = "";
@@ -72,6 +78,7 @@ public class XSShaderGenerator : EditorWindow
     private static string transparentFadeBlend = "Blend One OneMinusSrcAlpha";
     private static string transparentFadeShadowedBlend = "Blend One OneMinusSrcAlpha";
     private static string transparentDitheredBlend = "";
+    private static string transparentDitheredOutlinedBlend = "";
 
     //Generated Outline Pass
     private static string outlinePass = "Pass \n{ \n Name \"Outline\" \n Tags{ \"LightMode\"=\"ForwardBase\" \"IgnoreProjector\" = \"True\" } \n Cull Front \n CGPROGRAM \n #pragma vertex vert \n #pragma fragment frag \n #pragma target 3.0 \n #pragma multi_compile XS_OUTLINE_PASS \n #include \"CGInc/XSOutlinePass.cginc\" \n ENDCG \n}";
@@ -216,6 +223,11 @@ public class XSShaderGenerator : EditorWindow
                     ArrayUtility.Add(ref existingShaders, "XSToonTransparentDithered");
                     existsBox = 1;
                 }
+                if (File.Exists(shaderPath + "XSToonTransparentDitheredOutlined.shader") && transparentDithered == true && outlined == true)
+                {
+                    ArrayUtility.Add(ref existingShaders, "XSToonTransparentDitheredOutlined");
+                    existsBox = 1;
+                }
 
                 joined = ("\n\n- ") + string.Join("\n- ", existingShaders);
 
@@ -287,6 +299,11 @@ public class XSShaderGenerator : EditorWindow
                     ArrayUtility.Add(ref existingShaders, "XSToonTransparentDithered");
                     exists = true;
                 }
+                if (File.Exists(shaderPath + "XSToonTransparentDitheredOutlined.shader"))
+                {
+                    ArrayUtility.Add(ref existingShaders, "XSToonTransparentDitheredOutlined");
+                    exists = true;
+                }
                 whichExists = ("\n\n- ") + string.Join("\n- ", existingShaders);
                 break;
         }
@@ -321,6 +338,10 @@ public class XSShaderGenerator : EditorWindow
         if (transparentDithered == true)
         {
             ArrayUtility.Add(ref queued, "dither");
+        }
+        if (transparentDithered == true && outlined == true)
+        {
+            ArrayUtility.Add(ref queued, "ditherOutlined");
         }
         Create(finalFilePath);
     }
@@ -359,9 +380,14 @@ public class XSShaderGenerator : EditorWindow
             index = 5;
             WriteShader(finalFilePath, index);
         }
-        if (transparentDithered == true)
+        if (transparentDithered == true && outlined == false)
         {
             index = 6;
+            WriteShader(finalFilePath, index);
+        }
+        if (transparentDithered == true && outlined == true)
+        {
+            index = 7;
             WriteShader(finalFilePath, index);
         }
     }
@@ -375,37 +401,44 @@ public class XSShaderGenerator : EditorWindow
 
         string[] chosenShaderName = {cutoutName, cutoutOutlinedName, transparentName,
                                 transparentShadowedName, transparentFadeName,
-                                transparentFadeShadowedName, transparentDitheredName
+                                transparentFadeShadowedName, transparentDitheredName,
+                                transparentDitheredOutlinedName
                                 };
 
         string[] chosenShaderStringName = {cutoutStringName, cutoutOutlinedStringName, transparentStringName,
                                 transparentShadowedStringName, transparentFadeStringName,
-                                transparentFadeShadowedStringName, transparentDitheredStringName
+                                transparentFadeShadowedStringName, transparentDitheredStringName,
+                                transparentDitheredOutlinedStringName
                                 };
 
         string[] chosenShaderTags = {cutoutTags, cutoutTags, transparentTags,
                                 transparentShadowedTags, transparentFadeTags,
-                                transparentFadeShadowedTags, transparentDitheredTags
+                                transparentFadeShadowedTags, transparentDitheredTags,
+                                transparentDitheredOutlinedTags
                                 };
 
         string[] chosenShaderRender = {cutoutRender, cutoutRender, transparentRender,
                                 transparentShadowedRender, transparentFadeRender,
-                                transparentFadeShadowedRender, transparentDitheredRender
+                                transparentFadeShadowedRender, transparentDitheredRender,
+                                transparentDitheredOutlinedRender
                                 };
 
         string[] chosenShaderFallback = {cutoutFallback, cutoutFallback, transparentFallback,
                                 transparentShadowedFallback, transparentFadeFallback,
-                                transparentFadeShadowedFallback, transparentDitheredFallback
+                                transparentFadeShadowedFallback, transparentDitheredFallback,
+                                transparentDitheredOutlinedFallback
                                 };
 
         string[] chosenShaderBlend = {cutoutBlend, cutoutBlend, transparentBlend,
                                 transparentShadowedBlend, transparentFadeBlend,
-                                transparentFadeShadowedBlend, transparentDitheredBlend
+                                transparentFadeShadowedBlend, transparentDitheredBlend,
+                                transparentDitheredOutlinedBlend
                                 };
 
         string[] chosenShaderPragma = {cutoutPragma, cutoutPragma, transparentPragma,
                                 transparentShadowedPragma, transparentFadePragma,
-                                transparentFadeShadowedPragma, transparentDitheredPragma
+                                transparentFadeShadowedPragma, transparentDitheredPragma,
+                                transparentDitheredOutlinedPragma
                                 };
 
         string name = chosenShaderName[index];
@@ -444,7 +477,7 @@ public class XSShaderGenerator : EditorWindow
             {
                 if(outlined)
                 {
-                    if(chosenShaderStringName[index].ToString() != cutoutOutlinedStringName)
+                    if( !chosenShaderStringName[index].ToString().Contains("Outlined") )// != cutoutOutlinedStringName)
                     {
                          writer.WriteLine("");
                     }
