@@ -62,11 +62,11 @@ fixed4 frag( v2f i ) : COLOR
 	clip(i.color.a == 0 ? -1 : 1);
 
 	float3 col = i.color;
-
+	
 	if (_LitOutlines == 1)
 	{
-		float3 indirectIntensity = ShadeSH9(float4(0,0,0,1));
-		col *= length(indirectIntensity) / 3;
+		float3 indirectColor = ShadeSH9(float4(0,0,0,1));
+		col *= (indirectColor + _LightColor0) * 0.5;
 	}
 
 	return float4(col, 1);
