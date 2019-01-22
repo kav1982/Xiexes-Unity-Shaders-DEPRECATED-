@@ -50,7 +50,6 @@ Shader "Xiexe/Toon/XSToon"
 		_BakedCube("Local Cubemap", Cube) = "black" {}
 		_EmissiveTex("Emissive Tex", 2D) = "white" {}
 		_OcclusionMap("AO Map", 2D) = "white" {}
-		_DitherPattern("Dither Pattern", 2D) = "white" {}
 
 		_OcclusionStrength("Occlusion Strength", Range(0,1)) = 1
 		_NormalStrength("Normal Strength", float) = 1

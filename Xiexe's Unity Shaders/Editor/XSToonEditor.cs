@@ -51,7 +51,6 @@ public class XSToonEditor : ShaderGUI
         public static GUIContent occlusionMap = new GUIContent("Occlusion Map", "Occlusion map. Used to bake shadowing into areas through various methods. Black would be an area with forced shadows - white would be an area without.");
         public static GUIContent thicknessMap = new GUIContent("Thickness Map", "Used to show 'Thickness' in an area by stopping light from coming through. Black to white texture, Black means less light comes through. Only affects Subsurface Scattering.");
         public static GUIContent outlineTex = new GUIContent("Outline Masks", "The Outline Mask is used to control where the outlines can show, and the width of the outline. Setting this to fully black will make the outline completely gone, where fully white would be full width.");
-        public static GUIContent DitherTexture = new GUIContent("Dither Pattern", "Used to control the pattern that the Dithering makes.");
     }
 
     void DoFooter()
@@ -146,8 +145,6 @@ public class XSToonEditor : ShaderGUI
 	MaterialProperty _SpecularPatternUv2;
     MaterialProperty _AOUV2;
     MaterialProperty _LitOutline;
-    MaterialProperty _DitherPattern;
-    MaterialProperty _DitherPatternScale;
 
     public Texture ramp;
 
@@ -241,12 +238,6 @@ public class XSToonEditor : ShaderGUI
                     outlines = false;
                 }
 
-                if (material.shader.name.Contains("Dithered") )
-                {
-                    _DitherPattern = ShaderGUI.FindProperty("_DitherPattern", props);
-                    _DitherPatternScale = ShaderGUI.FindProperty("_DitherPatternScale", props);
-                }
-
                 _AORAMPMODE_ON = ShaderGUI.FindProperty("_AORAMPMODE_ON", props);
                 _OcclusionColor = ShaderGUI.FindProperty("_OcclusionColor", props);
 
@@ -302,12 +293,6 @@ public class XSToonEditor : ShaderGUI
                     GUI.skin = null;
                         materialEditor.ShaderProperty(saturation, Styles.Saturation, 3);
                         materialEditor.TextureScaleOffsetProperty(mainTex);
-                //Dither
-                    if(material.shader.name.Contains("Dithered"))
-                    {
-                        materialEditor.TexturePropertySingleLine(Styles.DitherTexture, _DitherPattern);
-                        materialEditor.ShaderProperty(_DitherPatternScale, "Dither Pattern Size");
-                    }
                        
                 //cutoff
                     if (material.shader.name.Contains("Cutout")) //== Shader.Find("Xiexe/Toon/XSToonCutout") || material.shader == Shader.Find("Xiexe/Toon/XSToonCutoutOutlined"))

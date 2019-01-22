@@ -53,7 +53,6 @@
 
 		sampler2D _MetallicMap;
 		sampler2D _ShadowRamp;
-		sampler2D _DitherPattern;
 		samplerCUBE _BakedCube;
 		float4 _MainTex_ST;
 		float4 _EmissiveTex_ST;
@@ -65,8 +64,6 @@
 		float4 _MetallicMap_ST;
 		float4 _RoughMap_ST;
 		float4 _BakedCube_ST;
-		float4 _DitherPattern_ST;
-
 		float4 _EmissiveColor;
 		float4 _SimulatedLightDirection;
 	 	float4 _Color;
@@ -112,8 +109,6 @@
 		float _ScaleWithLight;
 		float _EmissTintToColor;
 		float _EmissionPower;
-
-		int _DitherPatternScale;
 		int _EmissUv2;
 		int _DetailNormalUv2;
 		int _NormalUv2;
@@ -121,7 +116,6 @@
 		int _SpecularUv2;
 		int _SpecularPatternUv2;
 		int _AOUV2;
-
 		int _ANISTROPIC_ON;
 		int _PBRREFL_ON;
 		int _MATCAP_ON;
@@ -150,16 +144,6 @@
 			float3 worldViewDir = normalize((cameraPos - worldPos));
 			return worldViewDir;
 		}
-		
-		// float hash( float2 i ) {
-		// 	return frac( 1.0e4 * sin( 17.0*i.x + 0.1*i.y ) *
-		// 	( 0.1 + abs( sin( 13.0*i.y + i.x )))
-		// 	);
-		// }
-
-		// float hash3D( float3 i ) {
-		// 	return hash( float2( hash( i.xy ), i.z ) );
-		// }
 
 		inline float Dither8x8Bayer( int x, int y )
 		{
@@ -232,7 +216,6 @@
 				float2 uv_Specular = UVSetSpecular * _SpecularMap_ST.xy + _SpecularMap_ST.zw;
 				float2 uv_SpecularPattern = UVSetSpecularPattern * _SpecularPattern_ST.xy + _SpecularPattern_ST.zw;
 				float2 uv_MetallicRough = UVSetMetallic * _MetallicMap_ST.xy + _MetallicMap_ST.zw;
-				//float2 uv_DitherPattern = TRANSFORM_TEX(i.uv_texcoord, _DitherPattern);
 		//-----
 
 		//Set up Normals, viewDir, tanget, binorm
@@ -435,6 +418,7 @@
 						{
 							reflection = texCUBElod(_BakedCube, float4(reflectedDir, roughness * UNITY_SPECCUBE_LOD_STEPS));
 						}
+					reflection *= metalMap.g; //Mask out PBR Reflections using the green channel of the MetalMap
 				}
 			//--
 
@@ -503,13 +487,17 @@
 
 			//Emission
 				float4 emissive = _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER(_EmissiveTex, _MainTex, UVSetEmission) * lerp(MainColor, 1, _EmissTintToColor);
-				float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * _EmissionPower).z;
-				float emissiveScaled = saturate(pow(1-(emissPow), 2.2));
-				float scaleWithLight = _ScaleWithLight >= 1 ? 1 : emissiveScaled;
-				#if defined(POINT) || defined(SPOT)
-					scaleWithLight *= 0;
-				#endif
-				emissive *= scaleWithLight;
+				//skip this if we're not using it
+				if (_ScaleWithLight == 1)
+				{
+					float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * _EmissionPower).z;
+					float emissiveScaled = saturate(pow(1-(emissPow), 2.2));
+					float scaleWithLight = _ScaleWithLight >= 1 ? 1 : emissiveScaled;
+					#if defined(POINT) || defined(SPOT)
+						scaleWithLight *= 0;
+					#endif
+					emissive *= scaleWithLight;
+				}
 			//--
 
 			c.rgb = finalColor * (finalLight + sss.xyz + finalAddedLight) + emissive;
@@ -538,21 +526,11 @@
 			//dithered
 				#ifdef dithered
 					float2 screenPos = i.screenPos.xy;
-
 					float2 pos = screenPos / i.screenPos.w;
-					pos.x *= _ScreenParams.x/_ScreenParams.y;
-					#if UNITY_SINGLE_PASS_STEREO
-						pos *= 2; // Quick hack to make sure the pattern is the same size in VR and out of VR
-					#endif
+					pos *= _ScreenParams.xy; // pixel position
 
-					pos *= _DitherPatternScale; //scale the dithering pattern
-
-					float dither = tex2Dlod(_DitherPattern, float4(pos, 0, 0) ).r;
-					dither = round(dither * 64) / 64; // how many steps the dithering should take from 0% to 100%
-					dither = (MainTex.a * _Color.a) <= 0 ? 1 : dither; // Make sure if the alpha is 0 we're not showing any more of the texture
-
+					float dither = Dither8x8Bayer(fmod(pos.x, 8), fmod(pos.y, 8));
 					clip((MainTex.a * _Color.a) - dither);
-
 				#endif
 			//--
 		//-----
