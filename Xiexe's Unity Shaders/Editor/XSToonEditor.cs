@@ -295,12 +295,17 @@ public class XSToonEditor : ShaderGUI
                         materialEditor.TextureScaleOffsetProperty(mainTex);
                        
                 //cutoff
-                    if (material.shader.name.Contains("Cutout")) //== Shader.Find("Xiexe/Toon/XSToonCutout") || material.shader == Shader.Find("Xiexe/Toon/XSToonCutoutOutlined"))
+                    if (material.shader.name.Contains("Cutout") && !material.shader.name.Contains("AlphaToMask"))
                     {
                         materialEditor.ShaderProperty(alphaCutoff, Styles.cutoutText);
                     }
+                    if (material.shader.name.Contains("AlphaToMask"))
+                    {
+                        //So that a fallback to standard works as intended.
+                        material.SetFloat("_Cutoff", 0.5f);
+                    }
                 //-----
-                
+
                 //outlines
                 if(outlined == true)
                 { 

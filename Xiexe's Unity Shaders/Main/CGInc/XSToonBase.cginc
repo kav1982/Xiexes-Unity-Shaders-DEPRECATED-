@@ -36,9 +36,11 @@
 			half Occlusion;
 			fixed Alpha;
 			fixed3 Tangent;
+			float Cutoff;
 			Input SurfInput;
 			UnityGIInput GIData;
 		};
+
 
 		UNITY_DECLARE_TEX2D(_MainTex);
 		UNITY_DECLARE_TEX2D_NOSAMPLER(_EmissiveTex);
@@ -406,7 +408,7 @@
 				if(_PBRREFL_ON == 1)
 				{
 					metalMap = tex2D(_MetallicMap, uv_MetallicRough);
-					metalMap.rgb *= _Metallic;
+					metalMap.r *= _Metallic;
 					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
 					float roughness = (1-metalMap.a * _ReflSmoothness);
 					roughness *= 1.7 - 0.7 * roughness;
@@ -518,8 +520,12 @@
 
 			//cutout
 				#ifdef cutout
-					clip(MainTex.a - _Cutoff);
-					c.a = 1;
+					#ifdef AlphaToMask
+						c.a = MainTex.a;
+					#else
+						clip(MainTex.a - _Cutoff);
+						c.a = 1;
+					#endif
 				#endif
 			//--
 
@@ -534,6 +540,6 @@
 				#endif
 			//--
 		//-----
-			s.Alpha = MainTex.a * _Color.a;
+			s.Alpha = c.a;
 			return c;
 		}

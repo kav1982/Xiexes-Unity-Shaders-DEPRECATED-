@@ -52,9 +52,12 @@
 				float2 vpos = IN.pos;
 				#endif
 
+				#if defined(cutout)
+					clip(o.Alpha - 0.5);
+				#endif
 				#if defined(alphablend) || defined(dithered)
 					half alphaRef = tex3D( _DitherMaskLOD, float3( vpos.xy * 0.25, o.Alpha * 0.9375 ) ).a;
-					clip( alphaRef - 0.01 );
+					clip( alphaRef - 0.05 );
 				#endif
 				SHADOW_CASTER_FRAGMENT( IN )
 			}

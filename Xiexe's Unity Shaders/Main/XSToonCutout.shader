@@ -1,4 +1,4 @@
-Shader !name
+Shader "Xiexe/Toon/XSToonCutout"
 {
 	Properties
 	{
@@ -62,7 +62,7 @@ Shader !name
 		_RimIntensity("Rim Intensity", Range(0, 10)) = 0.8
 		
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0) 
-		_Cutoff ("Cutout Amount", Float) = 0.5
+		_Cutoff ("Cutout Amount", Float) = 0
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,10)) = 1
@@ -124,10 +124,10 @@ Shader !name
 
 	SubShader
 	{
-		!shadertags 
-
+	Tags{ "RenderType" = "TransparentCutout"  "Queue" = "AlphaTest" "IsEmissive" = "true"}
+		//!AlphaToMask
 		Cull [_Culling]
-		//!blend
+
 		ColorMask [_colormask]
 		ZTest [_ZTest]
 		ZWrite [_ZWrite]
@@ -144,7 +144,7 @@ Shader !name
 		}
 
 		CGINCLUDE
-		!definerendermode
+	#define cutout
 		#include "CGInc/XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
@@ -161,7 +161,7 @@ Shader !name
 		ENDCG
 		CGPROGRAM
 		
-		//!pragma
+	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
 
 		//#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
@@ -175,6 +175,7 @@ Shader !name
 			Name "ShadowCaster"
 			Tags{ "LightMode" = "ShadowCaster" }
 			ZWrite On
+			AlphaToMask Off
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -186,8 +187,7 @@ Shader !name
 			ENDCG
 		}
 
-		//!outlinepass
 	}
-    !fallback
+	Fallback "Transparent/Cutout/Diffuse"
 	CustomEditor "XSToonEditor"
 }
