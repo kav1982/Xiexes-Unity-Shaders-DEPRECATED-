@@ -11,11 +11,16 @@ struct v2f {
 	float4 vertex : POSITION;
 	float4 color : COLOR;
 	float2 uv : TEXCOORD0;
+	
+	#ifdef dithered
+		float4 screenPos : TEXCOORD1;
+	#endif
 };
 
 float _OutlineThickness;
 float4 _OutlineColor;
 sampler2D _OutlineTextureMap;
+
 
 v2f vert(appdata v) {
 	v2f o;
@@ -29,6 +34,11 @@ v2f vert(appdata v) {
 	o.vertex = UnityObjectToClipPos(v.vertex);
 	o.color = float4(_OutlineColor.xyz, outlineWidth);
 	o.uv = v.uv;
+
+	#ifdef dithered
+		o.screenPos = ComputeScreenPos(o.vertex);
+	#endif
+
 	return o;
 }
 
@@ -39,10 +49,25 @@ fixed4 frag( v2f i ) : COLOR
 		clip(maintex.a - _Cutoff);
 	#endif
 
+		#ifdef dithered
+					float4 maintex = UNITY_SAMPLE_TEX2D(_MainTex, i.uv);
+					float2 screenPos = i.screenPos.xy;
+					float2 pos = screenPos / i.screenPos.w;
+					pos *= _ScreenParams.xy; // pixel position
+
+					float dither = Dither8x8Bayer(fmod(pos.x, 8), fmod(pos.y, 8));
+					clip((maintex.a * _Color.a) - dither);
+		#endif
 	//alpha of the color is passed in as the width of our outline - if it's 0, then we discard it.
 	clip(i.color.a == 0 ? -1 : 1);
 
-	float3 indirectIntensity = ShadeSH9(float4(0,0,0,1));
-	float3 col = i.color * (length(indirectIntensity) / 3);
+	float3 col = i.color;
+	
+	if (_LitOutlines == 1)
+	{
+		float3 indirectColor = ShadeSH9(float4(0,0,0,1));
+		col *= (indirectColor + _LightColor0) * 0.5;
+	}
+
 	return float4(col, 1);
 }

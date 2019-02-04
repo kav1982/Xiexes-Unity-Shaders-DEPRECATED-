@@ -1,14 +1,11 @@
-//The base of this shader was made in amplify - however it has been heavily altered. 
-//If you open this in amplify it will kill the shader, don't do it.
-
-Shader "Xiexe/Toon/XSToon"
+Shader "Xiexe/Toon/XSToonCutoutOutlined"
 {
 	Properties
 	{
 		//[Toggle]_UseUV2forNormalsSpecular("Use UV2 for Normals/Specular", Float) = 0
 
 	//Enums for all options
-		[Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
+[Enum(Off,0,Front,1,Back,2)] _Culling ("Culling Mode", Int) = 2
 		[Enum(Horizontal,0,Vertical,1)] _RampDir ("Shadow Ramp Direction", Int) = 1
 		[Enum(Sharp,0,Smooth,1,Off,2)] _RimlightType("Rimlight Type", Int) = 0
 		[Enum(On,0,Off,1)] _UseReflections ("Use Reflections", Int) = 1
@@ -22,7 +19,7 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(On,0,Off,1)]_UseSpecular("Use Specular", Int) = 1
 		[Enum(On,0,Off,1)] _Emissive("Emissive?", Int) = 1
 		[Enum(Yes,0, No,1)] _ScaleWithLight("ScaleEmissWithLight", Int) = 1
-		
+
 		[Enum(UV1,0, UV2,1)] _EmissUv2("Emiss UV", Int) = 0
 		[Enum(UV1,0, UV2,1)] _DetailNormalUv2("Emiss UV", Int) = 0
 		[Enum(UV1,0, UV2,1)] _NormalUv2("Emiss UV", Int) = 0
@@ -35,7 +32,6 @@ Shader "Xiexe/Toon/XSToon"
 		[Enum(Basic, 0, Integrated, 1)]_AORAMPMODE_ON("", Int) = 0
 
 		[Enum(Unlit, 0, Lit, 1)]_LitOutlines("", Int) = 1
-		
 		
 	//Textures
 		_MainTex("Main Tex", 2D) = "white" {}
@@ -66,7 +62,7 @@ Shader "Xiexe/Toon/XSToon"
 		_RimIntensity("Rim Intensity", Range(0, 10)) = 0.8
 		
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0) 
-		_Cutoff ("Cutout Amount", Float) = 0.5
+		_Cutoff ("Cutout Amount", Float) = 0
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,10)) = 1
@@ -83,8 +79,6 @@ Shader "Xiexe/Toon/XSToon"
 		_ThicknessMap("Thickness Map", 2D) = "black" {}
 		[Toggle]_invertThickness("Invert Thickness Map", Float) = 0 
 		_ThicknessMapPower("Thickness Map Power", range(0,1)) = 1
-
-		[IntRange]_DitherPatternScale("DitherScale", Range(8,64)) = 8
 
 	//Don't delete these or comment them out, they are needed. Not sure why as of now.
 		[HideInInspector] _texcoord2( "", 2D ) = "white" {}
@@ -118,6 +112,7 @@ Shader "Xiexe/Toon/XSToon"
 		_OutlineColor("Outline Color", Color) = (0,0,0,1) 
 		_OutlineTextureMap("Outline Masks (R, G, B)", 2D) = "white" {}
 
+		
 		//Toggles to replace keywords
 		[Toggle]_ANISTROPIC_ON("", Int) = 0
 		[Toggle]_PBRREFL_ON("", Int) = 0
@@ -125,21 +120,18 @@ Shader "Xiexe/Toon/XSToon"
 		[Toggle]_MATCAP_CUBEMAP_ON("", Int) = 0
 		[Toggle]_WORLDSHADOWCOLOR_ON("", Int) = 0
 		[Toggle]_MIXEDSHADOWCOLOR_ON("", Int) = 0
-		
-		
 	}
 
 	SubShader
 	{
-
-
-		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry" "IsEmissive" = "true"  }
-
+	Tags{ "RenderType" = "TransparentCutout"  "Queue" = "AlphaTest" "IsEmissive" = "true"}
+		//!AlphaToMask
 		Cull [_Culling]
+
 		ColorMask [_colormask]
 		ZTest [_ZTest]
 		ZWrite [_ZWrite]
-
+		
 		Stencil
 		{
 			Ref [_Stencil]
@@ -151,9 +143,8 @@ Shader "Xiexe/Toon/XSToon"
 			ZFail [_StencilZFail]
 		}
 
-		
 		CGINCLUDE
-		#define opaque
+	#define cutout
 		#include "CGInc/XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
@@ -168,20 +159,23 @@ Shader "Xiexe/Toon/XSToon"
 		}
 
 		ENDCG
-
 		CGPROGRAM
-		#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
+		
+	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
+
 		//#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
-		// #pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
-		// #pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
+		//#pragma shader_feature _ _PBRREFL_ON _MATCAP_ON _MATCAP_CUBEMAP_ON
+		//#pragma shader_feature _ _WORLDSHADOWCOLOR_ON _MIXEDSHADOWCOLOR_ON
 		ENDCG
 
+		
 		Pass
 		{
 			Name "ShadowCaster"
 			Tags{ "LightMode" = "ShadowCaster" }
 			ZWrite On
+			AlphaToMask Off
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -192,23 +186,22 @@ Shader "Xiexe/Toon/XSToon"
 			#include "CGInc/XSShadowCaster.cginc"
 			ENDCG
 		}
-		
-		
-		// Pass
-		// {
-		// 	Name "Outline"
-		// 	Tags{ "LightMode"="ForwardBase" "IgnoreProjector" = "True" }
-		// 	ZWrite Off
-		// 	Cull Front
-		// 	CGPROGRAM
-		// 	#pragma vertex vert
-		// 	#pragma fragment frag
-		// 	#pragma target 3.0
-		// 	#pragma multi_compile XS_OUTLINE_PASS
-		// 	#include "CGInc/XSOutlinePass.cginc"
-		// 	ENDCG
-		// }
+
+		Pass
+		{
+			Name "Outline"
+			Tags{"LightMode"="ForwardBase" "IgnoreProjector" = "True" }
+			Cull Front
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma target 3.0
+			#pragma multi_compile XS_OUTLINE_PASS
+			#include "CGInc/XSOutlinePass.cginc"
+			ENDCG
+		}
+
 	}
-	Fallback "Diffuse"
+	Fallback "Transparent/Cutout/Diffuse"
 	CustomEditor "XSToonEditor"
 }

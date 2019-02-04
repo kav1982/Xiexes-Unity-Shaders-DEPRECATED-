@@ -4,7 +4,7 @@
 		#include "UnityCG.cginc"
 		#include "Lighting.cginc"
 		#pragma target 3.0
-		#if defined(XS_SHADOWCASTER_PASS) || defined(XS_OUTLINE_PASS)
+		#if defined(UNITY_PASS_SHADOWCASTER) || defined(XS_OUTLINE_PASS)
 			#undef INTERNAL_DATA
 			#undef WorldReflectionVector
 			#undef WorldNormalVector
@@ -36,9 +36,11 @@
 			half Occlusion;
 			fixed Alpha;
 			fixed3 Tangent;
+			float Cutoff;
 			Input SurfInput;
 			UnityGIInput GIData;
 		};
+
 
 		UNITY_DECLARE_TEX2D(_MainTex);
 		UNITY_DECLARE_TEX2D_NOSAMPLER(_EmissiveTex);
@@ -64,7 +66,6 @@
 		float4 _MetallicMap_ST;
 		float4 _RoughMap_ST;
 		float4 _BakedCube_ST;
-
 		float4 _EmissiveColor;
 		float4 _SimulatedLightDirection;
 	 	float4 _Color;
@@ -83,7 +84,6 @@
 		float _RimlightType;
 		float _RampDir;
 	 	float _ShadowIntensity;
-		float _DitherScale;
 		float _ColorBanding;
 	 	float _ReflSmoothness;
 	 	float _Metallic;
@@ -111,7 +111,6 @@
 		float _ScaleWithLight;
 		float _EmissTintToColor;
 		float _EmissionPower;
-
 		int _EmissUv2;
 		int _DetailNormalUv2;
 		int _NormalUv2;
@@ -119,7 +118,6 @@
 		int _SpecularUv2;
 		int _SpecularPatternUv2;
 		int _AOUV2;
-
 		int _ANISTROPIC_ON;
 		int _PBRREFL_ON;
 		int _MATCAP_ON;
@@ -127,6 +125,7 @@
 		int _WORLDSHADOWCOLOR_ON;
 		int _MIXEDSHADOWCOLOR_ON;
 		int _AORAMPMODE_ON;
+		int _LitOutlines;
 
 	//Custom Helper Functions		
 		float2 matcapSample(float3 worldUp, float3 viewDirection, float3 normalDirection)
@@ -298,11 +297,6 @@
 				{
 					remappedRamp *= (occlusionMap.x + ((1-occlusionMap.x) * (1-_OcclusionStrength)));
 				}
-				// #if DIRECTIONAL
-				// 	remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
-				// #else
-				// 	remappedRamp = (NdL * 0.5 + 0.5) * attenuation * occlusionMap.x;
-				// #endif
 
 				//rimlight typing
 				float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
@@ -310,8 +304,8 @@
 				float3 finalRim = lerp(sharpRim, smoothRim, _RimlightType) * _RimColor;
 				
 				float3 shadowRamp = tex2D( _ShadowRamp, remappedRamp.xx).xyz;	
-				float rampAvg = Luminance(shadowRamp);
-				float indirectAvg = Luminance(indirectColor);
+				float rampAvg = (shadowRamp.r + shadowRamp.g + shadowRamp.b) * 0.3333333;
+				float indirectAvg = (indirectColor.r + indirectColor.g + indirectColor.b) * 0.3333333;
 				float3 finalShadow;
 				float3 finalLight;
 				
@@ -362,7 +356,9 @@
 					}
 				}
 
-				float4 MainTex = pow(UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex ), _Saturation);
+				float4 MainTex = UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex );
+					   MainTex.rgb = pow(MainTex.rgb, _Saturation);
+				
 				float4 MainColor = MainTex * _Color;
 				if(_AORAMPMODE_ON == 0)
 				{
@@ -409,7 +405,7 @@
 				if(_PBRREFL_ON == 1)
 				{
 					metalMap = tex2D(_MetallicMap, uv_MetallicRough);
-					metalMap.rgb *= _Metallic;
+					metalMap.r *= _Metallic;
 					roughMap = UNITY_SAMPLE_TEX2D_SAMPLER(_RoughMap, _MainTex, uv_MetallicRough);
 					float roughness = (1-metalMap.a * _ReflSmoothness);
 					roughness *= 1.7 - 0.7 * roughness;
@@ -421,6 +417,7 @@
 						{
 							reflection = texCUBElod(_BakedCube, float4(reflectedDir, roughness * UNITY_SPECCUBE_LOD_STEPS));
 						}
+					reflection *= metalMap.g; //Mask out PBR Reflections using the green channel of the MetalMap
 				}
 			//--
 
@@ -489,13 +486,17 @@
 
 			//Emission
 				float4 emissive = _EmissiveColor * UNITY_SAMPLE_TEX2D_SAMPLER(_EmissiveTex, _MainTex, UVSetEmission) * lerp(MainColor, 1, _EmissTintToColor);
-				float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * _EmissionPower).z;
-				float emissiveScaled = saturate(pow(1-(emissPow), 2.2));
-				float scaleWithLight = _ScaleWithLight >= 1 ? 1 : emissiveScaled;
-				#if defined(POINT) || defined(SPOT)
-					scaleWithLight *= 0;
-				#endif
-				emissive *= scaleWithLight;
+				//skip this if we're not using it
+				if (_ScaleWithLight == 1)
+				{
+					float3 emissPow = saturate(rgb2hsv(indirectColor + lightColor) * _EmissionPower).z;
+					float emissiveScaled = saturate(pow(1-(emissPow), 2.2));
+					float scaleWithLight = _ScaleWithLight >= 1 ? 1 : emissiveScaled;
+					#if defined(POINT) || defined(SPOT)
+						scaleWithLight *= 0;
+					#endif
+					emissive *= scaleWithLight;
+				}
 			//--
 
 			c.rgb = finalColor * (finalLight + sss.xyz + finalAddedLight) + emissive;
@@ -516,8 +517,12 @@
 
 			//cutout
 				#ifdef cutout
-					clip(MainTex.a - _Cutoff);
-					c.a = 1;
+					#ifdef AlphaToMask
+						c.a = MainTex.a;
+					#else
+						clip(MainTex.a - _Cutoff);
+						c.a = 1;
+					#endif
 				#endif
 			//--
 
@@ -532,6 +537,6 @@
 				#endif
 			//--
 		//-----
-			s.Alpha = MainTex.a * _Color.a;
+			s.Alpha = c.a;
 			return c;
 		}

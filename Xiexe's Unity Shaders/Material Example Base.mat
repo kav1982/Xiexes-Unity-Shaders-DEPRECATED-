@@ -50,12 +50,16 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _OutlineTextureMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _RoughMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ShadowRamp:
-        m_Texture: {fileID: 2800000, guid: 516133a9f844ad84d8bf8ebbaeaa13cf, type: 3}
+        m_Texture: {fileID: 2800000, guid: 529b95e318b684643b47bd73e037118a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecularMap:
@@ -79,15 +83,31 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _ANISTROPIC_ON: 0
+    - _AORAMPMODE_ON: 0
+    - _AOUV2: 0
     - _Culling: 2
     - _Cutoff: 0.5
     - _DetailNormalStrength: 1
+    - _DetailNormalUv2: 0
+    - _EmissTintToColor: 1
+    - _EmissUv2: 0
+    - _EmissionPower: 1
     - _Emissive: 1
+    - _LitOutlines: 1
+    - _MATCAP_CUBEMAP_ON: 0
+    - _MATCAP_ON: 0
+    - _MIXEDSHADOWCOLOR_ON: 0
     - _MatcapStyle: 1
     - _Metallic: 0
+    - _MetallicUv2: 0
     - _NormalStrength: 1
+    - _NormalUv2: 0
     - _OcclusionStrength: 1
     - _Offset: 0
+    - _OutlineThickness: 0.1
+    - _PBRREFL_ON: 0
+    - _RampBaseAnchor: 0.5
     - _RampColor: 1
     - _RampDir: 1
     - _ReadMask: 255
@@ -100,11 +120,14 @@ Material:
     - _SSSIntensity: 0
     - _SSSPow: 1
     - _Saturation: 1
+    - _ScaleWithLight: 1
     - _ShadowType: 0
     - _SolidRimColor: 0
     - _SpecularArea: 0.5
     - _SpecularIntensity: 0
+    - _SpecularPatternUv2: 0
     - _SpecularStyle: 0
+    - _SpecularUv2: 0
     - _Stencil: 0
     - _StencilComp: 0
     - _StencilFail: 0
@@ -117,6 +140,7 @@ Material:
     - _UseSSS: 1
     - _UseSpecular: 1
     - _UseUV2forNormalsSpecular: 0
+    - _WORLDSHADOWCOLOR_ON: 0
     - _WriteMask: 255
     - _ZTest: 4
     - _ZWrite: 1
@@ -133,6 +157,8 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
     - _NormalTiling: {r: 1, g: 1, b: 0, a: 0}
+    - _OcclusionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _SSSCol: {r: 1, g: 1, b: 1, a: 1}
     - _SpecularPatternTiling: {r: 20, g: 20, b: 0, a: 0}

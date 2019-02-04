@@ -1,4 +1,4 @@
-Shader !name
+Shader "Xiexe/Toon/XSToonCutout"
 {
 	Properties
 	{
@@ -30,6 +30,8 @@ Shader !name
 
 		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
 		[Enum(Basic, 0, Integrated, 1)]_AORAMPMODE_ON("", Int) = 0
+
+		[Enum(Unlit, 0, Lit, 1)]_LitOutlines("", Int) = 1
 		
 	//Textures
 		_MainTex("Main Tex", 2D) = "white" {}
@@ -60,7 +62,7 @@ Shader !name
 		_RimIntensity("Rim Intensity", Range(0, 10)) = 0.8
 		
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0) 
-		_Cutoff ("Cutout Amount", Float) = 0.5
+		_Cutoff ("Cutout Amount", Float) = 0
 		_ReflSmoothness ("Reflection Smoothness", Range(0.001,1)) = 1
 		_Metallic ("Metallic", Range(0,1)) = 0
 		_StylelizedIntensity("Stylized Refl Intensity", Range(0,10)) = 1
@@ -122,10 +124,10 @@ Shader !name
 
 	SubShader
 	{
-		!shadertags 
-
+	Tags{ "RenderType" = "TransparentCutout"  "Queue" = "AlphaTest" "IsEmissive" = "true"}
+		//!AlphaToMask
 		Cull [_Culling]
-		//!blend
+
 		ColorMask [_colormask]
 		ZTest [_ZTest]
 		ZWrite [_ZWrite]
@@ -142,7 +144,7 @@ Shader !name
 		}
 
 		CGINCLUDE
-		!definerendermode
+	#define cutout
 		#include "CGInc/XSToonBase.cginc"
 
 		inline void LightingStandardCustomLighting_GI( inout SurfaceOutputCustomLightingCustom s, UnityGIInput data, inout UnityGI gi )
@@ -159,7 +161,7 @@ Shader !name
 		ENDCG
 		CGPROGRAM
 		
-		//!pragma
+	#pragma surface surf StandardCustomLighting keepalpha fullforwardshadows nometa
 
 		//#pragma shader_feature _ _ANISTROPIC_ON
 		#pragma shader_feature _ _REFLECTIONS_ON
@@ -173,19 +175,19 @@ Shader !name
 			Name "ShadowCaster"
 			Tags{ "LightMode" = "ShadowCaster" }
 			ZWrite On
+			AlphaToMask Off
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
 			#pragma target 3.0
 			#pragma multi_compile_shadowcaster
-			#pragma multi_compile XS_SHADOWCASTER_PASS
+			#pragma multi_compile UNITY_PASS_SHADOWCASTER
 			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
 			#include "CGInc/XSShadowCaster.cginc"
 			ENDCG
 		}
 
-		//!outlinepass
 	}
-    !fallback
+	Fallback "Transparent/Cutout/Diffuse"
 	CustomEditor "XSToonEditor"
 }

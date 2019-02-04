@@ -33,6 +33,8 @@ Shader "Xiexe/Toon/XSToonOutlined"
 		
 		[Enum(Yes,0, No,1)] _EmissTintToColor("TintToColor", Int) = 1
 		[Enum(Basic, 0, Integrated, 1)]_AORAMPMODE_ON("", Int) = 0
+
+		[Enum(Unlit, 0, Lit, 1)]_LitOutlines("", Int) = 1
 		
 		
 	//Textures
@@ -183,7 +185,7 @@ Shader "Xiexe/Toon/XSToonOutlined"
 			#pragma fragment frag
 			#pragma target 3.0
 			#pragma multi_compile_shadowcaster
-			#pragma multi_compile XS_SHADOWCASTER_PASS
+			#pragma multi_compile UNITY_PASS_SHADOWCASTER
 			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
 			#include "CGInc/XSShadowCaster.cginc"
 			ENDCG
