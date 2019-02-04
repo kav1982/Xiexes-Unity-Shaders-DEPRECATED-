@@ -297,11 +297,6 @@
 				{
 					remappedRamp *= (occlusionMap.x + ((1-occlusionMap.x) * (1-_OcclusionStrength)));
 				}
-				// #if DIRECTIONAL
-				// 	remappedRamp = (NdL * 0.5 + 0.5) * occlusionMap.x;
-				// #else
-				// 	remappedRamp = (NdL * 0.5 + 0.5) * attenuation * occlusionMap.x;
-				// #endif
 
 				//rimlight typing
 				float smoothRim = (smoothstep(0, 0.9, pow((1.0 - saturate(SVdN)), (1.0 - _RimWidth))) * _RimIntensity);
@@ -309,8 +304,8 @@
 				float3 finalRim = lerp(sharpRim, smoothRim, _RimlightType) * _RimColor;
 				
 				float3 shadowRamp = tex2D( _ShadowRamp, remappedRamp.xx).xyz;	
-				float rampAvg = Luminance(shadowRamp);
-				float indirectAvg = Luminance(indirectColor);
+				float rampAvg = (shadowRamp.r + shadowRamp.g + shadowRamp.b) * 0.3333333;
+				float indirectAvg = (indirectColor.r + indirectColor.g + indirectColor.b) * 0.3333333;
 				float3 finalShadow;
 				float3 finalLight;
 				
@@ -361,7 +356,9 @@
 					}
 				}
 
-				float4 MainTex = pow(UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex ), _Saturation);
+				float4 MainTex = UNITY_SAMPLE_TEX2D( _MainTex, uv_MainTex );
+					   MainTex.rgb = pow(MainTex.rgb, _Saturation);
+				
 				float4 MainColor = MainTex * _Color;
 				if(_AORAMPMODE_ON == 0)
 				{
