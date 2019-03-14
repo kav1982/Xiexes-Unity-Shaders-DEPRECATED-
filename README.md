@@ -1,2 +1,4 @@
-# Xiexes-Unity-Shaders
-A collection of PBR 'Toon' shaders for Unity.
+# Xiexes-Unity-Shaders-Deprecated
+
+You can find the up-to-date version of this shader here!
+https://github.com/Xiexe/Xiexes-Unity-Shaders
